@@ -15,7 +15,11 @@ import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -26,6 +30,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import kekmech.ru.feature_notes_shared.Note
 import kekmech.ru.feature_notes_shared.NotesController
@@ -36,6 +41,7 @@ import kekmech.ru.feature_schedule_shared.SelectedSchedule
 import kekmech.ru.feature_schedule_shared.UPCOMING_DAYS
 import kekmech.ru.feature_schedule_shared.UpcomingClass
 import kekmech.ru.feature_schedule_shared.WeekOfSemester
+import kekmech.ru.feature_schedule_shared.firstDayClasses
 import kekmech.ru.feature_schedule_shared.formatTimeLeft
 import kekmech.ru.feature_schedule_shared.isLunchTime
 import kekmech.ru.feature_schedule_shared.minutesUntilStart
@@ -137,12 +143,13 @@ private fun LazyListScope.contentItems(
     if (state.upcoming.isEmpty()) {
         item { EmptyState("Пока ничего интересного", "На ближайшие $UPCOMING_DAYS дней пар нет") }
     } else {
+        val firstDay = firstDayClasses(state.upcoming)
         val first = state.upcoming.first()
         val left = formatTimeLeft(minutesUntilStart(state.now, first))
         if (!first.inProgress && left.isNotEmpty()) {
             item { Text("Пара начнется через $left", style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.primary) }
         }
-        items(state.upcoming) { upcoming ->
+        items(firstDay) { upcoming ->
             UpcomingView(upcoming, today = upcoming.date == state.today, note = noteOf(upcoming, notes))
         }
     }
@@ -189,7 +196,9 @@ private fun TopBar(title: String, subtitle: String?, onOpenSettings: () -> Unit)
                 Text(subtitle, style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.primary)
             }
         }
-        TextButton(onClick = onOpenSettings) { Text("Настройки") }
+        IconButton(onClick = onOpenSettings) {
+            Icon(Icons.Filled.Settings, contentDescription = "Настройки", tint = MaterialTheme.colorScheme.primary)
+        }
     }
 }
 
@@ -270,6 +279,7 @@ private fun EmptyState(title: String, subtitle: String) {
             subtitle,
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = TextAlign.Center,
         )
     }
 }

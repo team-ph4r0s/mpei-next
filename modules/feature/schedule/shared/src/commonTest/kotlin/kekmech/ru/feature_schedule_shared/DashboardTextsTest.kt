@@ -79,6 +79,20 @@ internal class DashboardTextsTest {
     }
 
     @Test
+    fun `the home screen shows the first day with classes only`() {
+        val monday = LocalDate(2026, 11, 2)
+        val tuesday = LocalDate(2026, 11, 3)
+        val list = listOf(
+            upcoming(monday, LocalTime(9, 20)),
+            upcoming(monday, LocalTime(11, 10)),
+            upcoming(tuesday, LocalTime(9, 20)),
+        )
+
+        assertEquals(list.take(2), firstDayClasses(list))
+        assertEquals(emptyList(), firstDayClasses(emptyList()))
+    }
+
+    @Test
     fun `lunch time is a break in the middle of the day`() {
         assertTrue(isLunchTime(LocalTime(12, 45)))
         assertTrue(isLunchTime(LocalTime(13, 0)))

@@ -62,3 +62,9 @@ public fun upcomingCaption(today: LocalDate, firstDate: LocalDate): String = whe
 
 /** `true` at the lunch break of the university, when the home screen offers to look for a canteen. */
 public fun isLunchTime(time: LocalTime): Boolean = time >= LUNCH_START && time <= LUNCH_END
+
+/** The classes of the first day that has any: the home screen shows that day only, as Android does. */
+public fun firstDayClasses(upcoming: List<UpcomingClass>): List<UpcomingClass> {
+    val firstDate = upcoming.firstOrNull()?.date ?: return emptyList()
+    return upcoming.filter { it.date == firstDate }
+}
