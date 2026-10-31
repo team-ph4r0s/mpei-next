@@ -3,7 +3,9 @@ package kekmech.ru.feature_notes_shared
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
+import kotlinx.datetime.daysUntil
 
 /**
  * What the notes of the shown schedule do: it keeps the [notes] that the screen draws. The work with the store is quick
@@ -46,6 +48,18 @@ public class NotesController(private val store: NotesStore) {
     }
 
     public companion object {
+
+        /** How many days ahead a note is "actual" for the home screen, today included. */
+        public const val ACTUAL_DAYS: Int = 7
+
+        private const val ACTUAL_COUNT = 5
+
+        /** The notes of today and of the next [ACTUAL_DAYS] days, the nearest first: what the home screen shows (at most 5). */
+        public fun actual(notes: List<Note>, today: LocalDate): List<Note> =
+            notes
+                .filter { today.daysUntil(it.dateTime.date) in 0..ACTUAL_DAYS }
+                .sortedBy { it.dateTime }
+                .take(ACTUAL_COUNT)
 
         /** The text of a note on one line, for the card of a class. */
         public fun preview(note: Note): String = note.content.replace('\n', ' ')

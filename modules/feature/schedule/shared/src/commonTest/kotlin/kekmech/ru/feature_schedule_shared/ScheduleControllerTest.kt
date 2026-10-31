@@ -293,6 +293,25 @@ internal class ScheduleControllerTest {
     }
 
     @Test
+    fun `switching to a schedule works from a week and remembers the choice`() = runTest {
+        FavoriteSchedules(store).add(selectedGroup)
+        val controller = controller(this)
+        controller.onQueryChange("А-01")
+        settle(controller)
+        controller.select(found)
+        settle(controller)
+
+        controller.switchTo(selectedGroup)
+        settle(controller)
+
+        val week = controller.state.value as ScheduleUiState.Week
+        assertEquals(selectedGroup, week.selected)
+        assertEquals(true, week.favorite)
+        assertNotNull(week.schedule)
+        assertEquals(selectedGroup, ScheduleCache(store).selected())
+    }
+
+    @Test
     fun `a search with nothing chosen cannot be cancelled`() = runTest {
         val controller = controller(this)
 

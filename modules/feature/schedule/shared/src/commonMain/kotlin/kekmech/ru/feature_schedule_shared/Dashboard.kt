@@ -32,10 +32,12 @@ public sealed interface DashboardUiState {
     /**
      * @param weekOfSemester the week of the semester that is going now
      * @param upcoming the classes of the next [UPCOMING_DAYS] days that have not ended, in the order they go
+     * @param now the moment the data was loaded at, in Moscow
      * @param offline `true` when the data is the copy on the device because the network failed
      */
     public data class Content(
         val selected: SelectedSchedule,
+        val now: LocalDateTime,
         val today: LocalDate,
         val weekOfSemester: WeekOfSemester?,
         val upcoming: List<UpcomingClass>,
@@ -119,6 +121,7 @@ public class DashboardController(
                 val weeks = thisWeek.schedule.weeks + nextWeek?.schedule?.weeks.orEmpty()
                 DashboardUiState.Content(
                     selected = schedule,
+                    now = now,
                     today = now.date,
                     weekOfSemester = thisWeek.schedule.weeks.firstOrNull()?.weekOfSemester,
                     upcoming = upcomingClasses(weeks, now),

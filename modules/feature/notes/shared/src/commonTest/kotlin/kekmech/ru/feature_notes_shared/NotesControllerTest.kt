@@ -1,6 +1,7 @@
 package kekmech.ru.feature_notes_shared
 
 import kekmech.ru.lib_settings.InMemoryKeyValueStore
+import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -95,6 +96,26 @@ internal class NotesControllerTest {
         controller.save("Физика", physics, "текст")
 
         assertEquals(emptyList(), controller.notes.value)
+    }
+
+    @Test
+    fun `actual notes are the ones of the next week and the nearest go first`() {
+        val today = LocalDate(2026, 10, 27)
+        fun note(day: Int, name: String) = Note(content = "т", dateTime = LocalDateTime(2026, 10, day, 9, 20), classesName = name)
+        val notes = listOf(note(30, "в"), note(26, "прошлая"), note(27, "а"), note(3, "далекая").copy(dateTime = LocalDateTime(2026, 11, 3, 9, 20)), note(28, "б"))
+
+        val actual = NotesController.actual(notes, today)
+
+        // 3 November is exactly 7 days ahead: it is still actual; 26 October is in the past
+        assertEquals(listOf("а", "б", "в", "далекая"), actual.map { it.classesName })
+    }
+
+    @Test
+    fun `actual notes are limited to five`() {
+        val today = LocalDate(2026, 11, 1)
+        val notes = (0..6).map { Note(content = "т", dateTime = LocalDateTime(2026, 11, 1 + it, 9, 20), classesName = "п$it") }
+
+        assertEquals(5, NotesController.actual(notes, today).size)
     }
 
     @Test
