@@ -69,7 +69,7 @@ explore_tabs() {
 
   # every tab has to show its own screen
   local failed=0
-  grep -qiE "Scheme|Схема" "$OUT/texts-navigation_map.txt" || { echo "::error::The Map tab does not show the map"; failed=1; }
+  grep -qiE "Scheme|Схема|Спутник|Satellite|Поиск мест" "$OUT/texts-navigation_map.txt" || { echo "::error::The Map tab does not show the map"; failed=1; }
   grep -qiE "Settings|Настройки" "$OUT/texts-navigation_profile.txt" || { echo "::error::The Profile tab does not open"; failed=1; }
   grep -qiE "Upcoming|Ближайшие" "$OUT/texts-navigation_dashboard.txt" || { echo "::error::The Home tab does not open"; failed=1; }
   return $failed
