@@ -263,7 +263,19 @@ data class BarsSendCodeResult(
     val success: Boolean?,
     val message: String?,
     val error: String? = null,
-)
+) {
+
+    /**
+     * The seconds to wait when BARS refuses a code because one was sent just now ("Повторный код можно отправить через 29 сек."),
+     * or `null` for any other answer. The limit is shared by all the ways to get a code.
+     */
+    val retryAfterSeconds: Int?
+        get() = error?.let { RETRY_AFTER.find(it)?.groupValues?.get(1)?.toIntOrNull() }
+
+    private companion object {
+        val RETRY_AFTER = Regex("""через\s+(\d+)\s*сек""", RegexOption.IGNORE_CASE)
+    }
+}
 
 /**
  * The marks of one semester as BARS sends them when the semester is changed (the inner part of the marks container:

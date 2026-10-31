@@ -139,6 +139,15 @@ class BarsAuthParserTest {
     }
 
     @Test
+    fun `tells how long to wait when a code was sent just now`() {
+        val tooSoon = BarsAuthParser.parseSendCodeResult("""{"success":false,"error":"Повторный код можно отправить через 29 сек."}""")
+
+        assertEquals(29, tooSoon.retryAfterSeconds)
+        assertNull(BarsAuthParser.parseSendCodeResult("""{"success":false,"error":"Код уже отправлен"}""").retryAfterSeconds)
+        assertNull(BarsAuthParser.parseSendCodeResult("""{"success":true,"message":"ok"}""").retryAfterSeconds)
+    }
+
+    @Test
     fun `reads the error of a refused request for a code`() {
         val refused = BarsAuthParser.parseSendCodeResult("""{"success":false,"error":"Код уже отправлен"}""")
 
