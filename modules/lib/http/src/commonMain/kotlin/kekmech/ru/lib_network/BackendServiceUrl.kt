@@ -20,20 +20,20 @@ public enum class BackendServiceUrl(
     ),
     /** Статические геометки и контуры зданий кампуса OpenStreetMap */
     MAP(
-        prodEndpoint = "https://raw.githubusercontent.com/ghostoftheeleven/mpei-next/main/statics/map/",
-        stagingEndpoint = "https://raw.githubusercontent.com/ghostoftheeleven/mpei-next/dev/statics/map/",
+        prodEndpoint = "https://raw.githubusercontent.com/team-ph4r0s/mpei-next/main/statics/map/",
+        stagingEndpoint = "https://raw.githubusercontent.com/team-ph4r0s/mpei-next/dev/statics/map/",
         mockEndpoint = "http://localhost:8080/map/",
     ),
     /** Настройки приложения, которые меняются без выпуска версии (обновление, тогглы): statics/app/config.json */
     APP_CONFIG(
-        prodEndpoint = "https://raw.githubusercontent.com/ghostoftheeleven/mpei-next/main/statics/app/",
-        stagingEndpoint = "https://raw.githubusercontent.com/ghostoftheeleven/mpei-next/dev/statics/app/",
+        prodEndpoint = "https://raw.githubusercontent.com/team-ph4r0s/mpei-next/main/statics/app/",
+        stagingEndpoint = "https://raw.githubusercontent.com/team-ph4r0s/mpei-next/dev/statics/app/",
         mockEndpoint = "http://localhost:8080/app/",
     ),
     /** Конфигурация и JS-скрипты парсинга личного кабинета БАРС */
     BARS(
-        prodEndpoint = "https://raw.githubusercontent.com/ghostoftheeleven/mpei-next/main/statics/bars/",
-        stagingEndpoint = "https://raw.githubusercontent.com/ghostoftheeleven/mpei-next/dev/statics/bars/",
+        prodEndpoint = "https://raw.githubusercontent.com/team-ph4r0s/mpei-next/main/statics/bars/",
+        stagingEndpoint = "https://raw.githubusercontent.com/team-ph4r0s/mpei-next/dev/statics/bars/",
         mockEndpoint = "http://localhost:8080/bars/",
     ),
     /** Публичный GitHub REST API (контрибьюторы, релизы, обновления) */

@@ -1,7 +1,7 @@
 # iOS-версия: сборка и установка на iPhone
 
 iOS-версия делается на Kotlin Multiplatform + Compose Multiplatform из кода этого репозитория; план и статус по этапам —
-в issue [#5](https://github.com/ghostoftheeleven/mpei-next/issues/5). Mac не нужен: приложение собирает GitHub Actions
+в issue [#5](https://github.com/team-ph4r0s/mpei-next/issues/5). Mac не нужен: приложение собирает GitHub Actions
 на macOS-раннере, готовый файл ставится на телефон с Windows.
 
 > Что внутри сборки, зависит от этапа плана в #5. На этапе M0 в приложении только заглушка, которая проверяет сам конвейер;

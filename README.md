@@ -17,7 +17,7 @@
 
 <br/>
 
-[![CI](https://img.shields.io/github/actions/workflow/status/ghostoftheeleven/mpei-next/android.yml?branch=main&label=CI&logo=github&color=2ea44f)](https://github.com/ghostoftheeleven/mpei-next/actions)
+[![CI](https://img.shields.io/github/actions/workflow/status/team-ph4r0s/mpei-next/android.yml?branch=main&label=CI&logo=github&color=2ea44f)](https://github.com/team-ph4r0s/mpei-next/actions)
 ![Android](https://img.shields.io/badge/Android-8.0+_(API_26–36)-3DDC84?logo=android&logoColor=white)
 ![Kotlin](https://img.shields.io/badge/Kotlin-2.2_·_KMP-7F52FF?logo=kotlin&logoColor=white)
 ![Compose](https://img.shields.io/badge/Compose-Material_3-4285F4?logo=jetpackcompose&logoColor=white)
@@ -26,11 +26,11 @@
 ![Privacy](https://img.shields.io/badge/privacy-152--ФЗ_·_Zero_Trackers-6f42c1)
 ![Third-party SDK](https://img.shields.io/badge/third--party_SDK-0-008080)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE)
-[![Release](https://img.shields.io/github/v/release/ghostoftheeleven/mpei-next?label=Release&color=orange)](https://github.com/ghostoftheeleven/mpei-next/releases)
+[![Release](https://img.shields.io/github/v/release/team-ph4r0s/mpei-next?label=Release&color=orange)](https://github.com/team-ph4r0s/mpei-next/releases)
 
 <br/>
 
-[📥 Скачать релизный APK](https://github.com/ghostoftheeleven/mpei-next/releases/latest) • [📖 Документация](docs/) • [🗺️ Карта кампуса](#-навигация-и-кампус-лефортово) • [🔐 БАРС и 2FA](#-личный-кабинет-барс) • [🛠️ Сборка](#-сборка-и-запуск-проекта)
+[📥 Скачать релизный APK](https://github.com/team-ph4r0s/mpei-next/releases/latest) • [📖 Документация](docs/) • [🗺️ Карта кампуса](#-навигация-и-кампус-лефортово) • [🔐 БАРС и 2FA](#-личный-кабинет-барс) • [🛠️ Сборка](#-сборка-и-запуск-проекта)
 
 </div>
 
@@ -122,7 +122,7 @@
 
 ```bash
 # Клонирование репозитория
-git clone https://github.com/ghostoftheeleven/mpei-next.git
+git clone https://github.com/team-ph4r0s/mpei-next.git
 cd mpei-next
 
 # Сборка debug APK
@@ -184,6 +184,7 @@ mpei-next/
 ## 👥 Авторы и разработчики
 
 * **Расул Рустамов** ([@ghostoftheeleven](https://github.com/ghostoftheeleven)) — Архитектура, разработка «МЭИ.Хаб», студент МЭИ
+* **Team Ph4r0s** ([team-ph4r0s](https://github.com/team-ph4r0s)) — организация, в которой развивается проект
 * **Johnny Wickky** ([@Johnny-Wickky](https://github.com/Johnny-Wickky)) — Соавтор, студент МЭИ, информационная безопасность
 * **Антон Коломейцев** ([@tonykolomeytsev](https://github.com/tonykolomeytsev)) — Создатель оригинального приложения MpeiX
 
