@@ -100,6 +100,15 @@ public class ScheduleController(
         open(selected)
     }
 
+    /** Makes [selected] the chosen schedule from any state: the home screen switches between the favorites with it. */
+    public fun switchTo(selected: SelectedSchedule) {
+        searchJob?.cancel()
+        cache.saveSelected(selected)
+        val week = weekState(selected)
+        mutableState.value = week
+        loadWeek(week)
+    }
+
     /** Adds the shown schedule to the favorites, or removes it from them. */
     public fun toggleFavorite() {
         val current = mutableState.value as? ScheduleUiState.Week ?: return

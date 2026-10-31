@@ -87,6 +87,8 @@ public fun App(dependencies: AppDependencies) {
                 is ScheduleUiState.Search -> if (state.canCancel) scheduleCache.selected() else null
             }
             var tab by remember { mutableIntStateOf(TAB_HOME) }
+            // the favorites change on the schedule screen, so the list is read again when the home screen appears
+            val favoriteList = remember(tab, selected) { favorites.list() }
             LaunchedEffect(notes, selected?.name) { notes.setSchedule(selected?.name) }
             // the home screen is loaded again every time it appears, so "now" is not stale
             LaunchedEffect(dashboard, selected, tab) { if (tab == TAB_HOME) dashboard.show(selected) }
@@ -119,12 +121,16 @@ public fun App(dependencies: AppDependencies) {
                         TAB_HOME -> DashboardScreen(
                             dashboard,
                             notes,
+                            favorites = favoriteList,
                             // the search of the schedule opens at once; the group that was chosen stays until another one is picked
                             onChooseSchedule = {
                                 schedule.startSearch()
                                 tab = TAB_SCHEDULE
                             },
+                            onSelectFavorite = schedule::switchTo,
                             onOpenSettings = { showSettings = true },
+                            onOpenNotes = { tab = TAB_NOTES },
+                            onOpenMap = { tab = TAB_MAP },
                         )
                         TAB_SCHEDULE -> ScheduleScreen(schedule, notes)
                         TAB_NOTES -> NotesScreen(notes, selected?.name)
