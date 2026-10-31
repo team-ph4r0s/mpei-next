@@ -1,87 +1,121 @@
 # Где мы остановились (заметка для следующей сессии)
 
-Обновлено 30.10.2026. Репозиторий: `ghostoftheeleven/mpei-next`, работа идёт прямо в `main` (правило владельца: без веток и PR).
-План iOS и статус по этапам — задача [#5](https://github.com/ghostoftheeleven/mpei-next/issues/5) (её чекбоксы устарели, ориентироваться на этот файл).
+Обновлено 31.10.2026. Репозиторий: `ghostoftheeleven/mpei-next`, работа идёт прямо в `main` (правило владельца: без веток и PR,
+пушить каждый законченный срез сразу). Коммиты заканчиваются строкой `Co-Authored-By: Syberia <noreply@syberia.invalid>`.
+План iOS и статус по этапам — задача [#5](https://github.com/ghostoftheeleven/mpei-next/issues/5) (чекбоксы в ней и в дочерних
+отстают, ориентироваться на этот файл). Рабочая папка: `C:\dev\MPEI Hub\mpei-next` (путь без кириллицы, это важно).
 
-## Состояние
+## 1. На чём остановились
 
-- **M0** конвейер iOS `.ipa` — готов. **M6** БАРС на iOS — готов в коде, **на устройстве не проверен** (Sideloadly + вход с настоящим 2FA).
-- **M1 (фундамент KMP)** готов, кроме системной кнопки «назад» и свайпа назад на iOS. Новые KMP-модули (конвенция `mpeix.lib.kmp`, цели jvm + iosArm64 + iosSimulatorArm64):
-  `ext_kotlin`, `ext_koin`, `lib_coroutines`, `lib_elm`, `ext_datetime` (kotlinx-datetime), `lib_settings` (KeyValueStore,
-  NSUserDefaults на iOS, адаптер SharedPreferences в `ext_shared_preferences`), `lib_http` (клиент Ktor + каталог
-  `BackendServiceUrl`), `lib_mpei_api` (API расписания ts.mpei.ru), `lib_navigator` (стек экранов с командами Router) и
-  `lib_navigator_compose` (`NavHost`, `LocalBackStackEntry`) и `lib_elm_ui` (`rememberElmStore`, `ElmContent`: ELM-стор
-  экрана лежит в `BackStackEntry.scope` и останавливается, когда запись уходит из стека).
-- Эти модули пока **только добавлены**: Android-приложение по-прежнему на Retrofit, `java.time`, `SharedPreferences` и Fragment.
-  Потребители переходят на них вместе с переводом своих модулей на KMP (M3 расписание, M4 заметки и настройки).
-- `mock_server` переведён на Ktor 3.3.3 (в debug-сборке сервер и клиент на одном classpath); в рантайме на устройстве не проверялся.
-- **M2 начат:** `ui_theme` теперь KMP с Android-таргетом (конвенция `mpeix.lib.kmp.android`): палитра, типографика,
-  `MpeixTheme` в `commonMain`, шрифты Roboto в `composeResources/font` (`rememberRobotoFontFamily()`), прозрачные системные
-  панели через `expect/actual`, превью в `androidMain`. `RobotoFontFamily` как обычная переменная остался в `androidMain`
-  для трёх Android-экранов. Остаётся: `ui_kit_*`, иконки, строки RU/EN, `ui_shimmer`, `ui_splash`.
-- **M3 начат:** `feature_schedule_shared` (KMP): модели расписания (`@Serializable`, kotlinx-datetime), `MpeiScheduleMapper`,
-  `ScheduleService` (поиск и неделя через `MpeiScheduleApi`), `ScheduleCache` (выбранное расписание и последние 12 недель
-  в `KeyValueStore`, JSON) и `FavoriteSchedules` (избранное, JSON в `KeyValueStore`) и `ScheduleController` (состояния `Search` / `Week`, офлайн-копия при ошибке сети, звёздочка). 36 тестов на JVM
-  (в тестах контроллера `MockEngine` отвечает на реальном диспетчере, поэтому ждём через `settle`, а не `advanceUntilIdle`).
-  `ui_shimmer` теперь KMP (`Modifier.shimmer()` в общем коде: градиентная полоса вместо `android.graphics.Matrix`, границы из `LocalWindowInfo`); визуально на эмуляторе не сверялся, только сборка Android. Скелетон недели в `ScheduleScreen` использует его.
-  Экран расписания (`ScheduleScreen`: поиск, неделя, офлайн-пометка) в `:shared`, `App` с нижними вкладками «Расписание» / «БАРС»,
-  `MainViewController` собирает Ktor-клиент, `ScheduleService` и `ScheduleCache` на `NSUserDefaults`. На iOS не запускалось: только
-  `compileCommonMainKotlinMetadata`/`compileIosMainKotlinMetadata` локально и CI. Избранное в `:shared` готово (звёздочка на неделе, список в поиске). Не сделано: полноценный онбординг (сейчас приветствие на экране поиска),
-  Room KMP вместо `KeyValueStore`-кэша (если понадобится), перевод Android-потребителей на эти классы.
-- **Сравнение iOS с Android (Appetize):** расписание по одному дню с выбором дня, тап по группе на Главной открывает поиск без потери выбранного; смотреть iOS: workflow `iOS Simulator` → `Appetize Upload`, проход заранее расписать (30 минут в месяц).
-- **Вид iOS-приложения (по скриншотам с iPhone):** отступы системных панелей применяются один раз в `App.kt` (`WindowInsets.safeDrawing`: верх и бока; не `safeContent`, в нём зоны жестов дают лишние поля по бокам), экраны сами `safeContentPadding` не вызывают; нижняя панель — компонент `ui_kit_navigationbar` с иконками `ui_icons`, как на Android; пары — карточка `ClassCard` (цвет типа, время, аудитория, преподаватель, заметка). Всё ещё без вида в симуляторе: смотреть на устройстве и сравнивать со скриншотами. Дальше по дизайну: перевести заголовки/поля на компоненты `ui_kit_*`, пустые состояния, карточки БАРС.
-- **Firebase убран из обеих версий (решение владельца):** Android больше не использует Remote Config, Crashlytics и Analytics: нет плагинов `google-services`/`crashlytics`, файлов `google-services.json` (prod, debug, qa) и секрета `GOOGLE_SERVICES` в CI. Принудительное обновление и тоггл снежинок (`ft_show_flakes_effect`) читаются из `statics/app/config.json` (`RepoRemoteConfig`, те же ключи; последний ответ хранится на устройстве; описание в `statics/app/README.md`). Падения пишутся только в локальный лог (Timber/`Log`), название группы больше никуда не уходит. `Analytics` (события экранов) оставлен как интерфейс, но события никуда не отправляются (`AnalyticsWrapper` пустой): при желании вызовы можно удалить совсем (около 40 файлов). iOS Firebase не использовал. README теперь верен для обеих платформ. Запросы к GitHub (метки, `config.json`) идут через клиент приложения и несут заголовки `X-Device-Id`/версию, как и раньше.
-- **M7, фоновое обновление и замены пар на iOS:** `ScheduleChangeDetector` (алгоритм Android, 13 тестов), `ScheduleChangeText` (тексты как в Android), `ScheduleSnapshots` (прошлая версия недель, отдельно от кэша экранов), `ScheduleChangeChecker`, `ScheduleBackgroundSync`, переключатель в «Настройках» (по умолчанию выключен); `IosChangeNotifier` (уведомление сразу, идентификатор `schedule-changes`), `IosBackground.runBackgroundRefresh` + Swift `BackgroundRefresh` (`BGAppRefreshTask` `ru.mpei.hub.refresh`, не раньше чем через 6 часов, `UIBackgroundModes: fetch` в `project.yml`); при открытии приложения то же самое запускается на переднем плане. Вся сборка приложения теперь в `AppDependencies` / `IosAppGraph`, её используют и экран, и фоновая задача. iOS-часть проверена только сборкой в CI; живая проверка (в т.ч. фона) нужна на устройстве, см. `docs/IOS.md`.
-- **M7, напоминания о парах на iOS:** общий `ClassReminderPlanner` (правила как на Android: только практики и лабораторные, за 24 и за 5 часов, ночью 23:00–07:00 сдвиг на 07:00, не позже чем за 15 минут до пары; пары в московском времени, «ночь» по часам телефона), `RemindersController` и `ClassReminderSettings` (по умолчанию выключено) в `feature_schedule_shared` (23 новых теста); `IosReminderScheduler` на `UNUserNotificationCenter` (локальные уведомления через `UNTimeIntervalNotificationTrigger`, не больше 64, окно 3 недели, пересчёт при каждом открытии приложения и смене расписания); экран «Настройки» (кнопка на «Главной»): переключатель, 24 ч / 5 ч, подсказка про запрет уведомлений. Не сделано: виджет WidgetKit, Firebase iOS (нужен `GoogleService-Info.plist` владельца), TestFlight (нужен Apple Developer Program). iOS-часть проверена только компиляцией метаданных; живая проверка уведомлений нужна на устройстве.
-- **Android-карта переведена на общий компонент (M5):** `MapFragment` теперь `ComposeFragment` с `MapScreen` из `ui_map` (тот же экран, что на iOS), `osmdroid`, ELM-стор карты, нижняя шторка, XML-разметка и модуль `lib_emoji` удалены (эмодзи-метки и значки перенесены в ресурсы Compose `ui_map`). Метки рисуются «булавкой» тех же цветов и формы, что раньше. Нижней шторки больше нет: поиск, вкладки, карта и список идут колонкой, как на iOS (изменение дизайна). Сохранены: `MapFeatureLauncher` (диплинки `selectPlace`/`selectTab` через `DeeplinkDelegate` на `StateFlow`), вид карты в настройках приложения (`AppSettings.mapAppearanceType` через `AppearanceStorage`), аналитика (`Tab_*`, `ListMarker_*`, `MapAppearance_*`, `MapReload`), встроенный `markers.json` как запасной вариант, сброс вида по повторному тапу на вкладку. Тайлы грузит отдельный клиент без `X-Device-Id` (`tileHttpClient`): OSM и Esri не должны получать идентификатор устройства. Поиск мест (`feature_search`) по-прежнему берёт метки из старого `MapRepository`. Проверено на эмуляторе в debug и в release (R8): вкладки, выбор места, спутник, диплинки на вкладку и на место.
-- **Карта кампуса (M5), решение:** один подход на обеих платформах — общий Compose-компонент, который рисует растровые тайлы Esri (те же, что сейчас у osmdroid) и метки `markers.json`; без нативных SDK (MapKit/MapLibre), потому что iOS проверяется только в CI, а математику тайлов можно тестировать на JVM. Готово: `feature_map_shared` (`MapMarker`, `MapMarkersRepository` с офлайн-копией — GitHub отдаёт файл как `text/plain`, поэтому парсим текст вручную, `filterMarkers`, `WebMercator`). Готово: `MapCamera` (панорамирование, зум вокруг точки, попадание по метке; 21 тест) и модуль `ui_map` (KMP + Android-таргет): `MpeiMap`, `TileLoader` (кэш в памяти, дозагрузка, грубый тайл пока грузится точный), `MapAppearance` (схема OSM / гибрид Esri). Проверено на эмуляторе через `MapDemoActivity` (демо-приложение `ui_kit_demo`): тайлы, 75 меток, выбор метки, перетаскивание, гибрид. Не проверено: пинч и двойной тап (через adb не воспроизвести), iOS. Демо `MainActivity` (navigation3) падает из-за конфликта activity 1.12 и Compose UI 1.9, это было и до карты. Экран карты (`MapScreen` в `ui_map`: поиск по всем вкладкам, вкладки Еда/Корпуса/Общежития/Кафедры/Прочее, карта, список, вид «схема/спутник» запоминается) и `MapController` (27 тестов в `feature_map_shared`) готовы; в iOS-приложении вкладка «Карта» (`MapDependencies` собирает платформа). Проверено на эмуляторе через `MapDemoActivity`: вкладки, выбор из списка с переездом камеры. Дальше: если решим, Android `MapFragment` на `MapScreen`/`MpeiMap` и уход с osmdroid (нижняя шторка, фильтры и deeplink-и там свои). Дисковый кэш тайлов пока нет (osmdroid кэширует на диск).
-- **M4 для iOS начат (заметки):** `feature_notes_shared` (KMP): `Note`, `NotesStore` (JSON в `KeyValueStore`, по расписаниям), `NotesController`; заметка привязана к паре по (расписание, название, дата+начало пары), как на Android. В `ScheduleScreen` тап по паре открывает редактор, у пары с заметкой строка «✎ …». Android остаётся на Room (`feature_notes_impl`), общая версия его не заменяет. Решение владельца: Android-модели расписания (`feature_schedule_api`, `ScheduleDto`) на общие **не меняем** (77 файлов, `java.time`, Bundle, виджет, будильники; пользы для iOS нет). Вкладка «Заметки» (`NotesScreen`: список, правка, удаление) готова. Главная (`DashboardScreen`, `DashboardController` + `upcomingClasses` в `feature_schedule_shared`): неделя семестра и ближайшие пары на 7 дней, «идёт сейчас», заметки у пар, офлайн из кэша; загрузка недели с фолбэком вынесена в `WeekLoader`. Вкладки: Главная · Расписание · Заметки · БАРС. Не сделано: настройки на iOS.
-- **Android-сеть расписания на shared (M3):** `MpeiDirectScheduleService`, Retrofit-`MpeiScheduleService`, DTO ts.mpei.ru и `MpeiScheduleMapper` удалены; `KtorScheduleService` (feature_schedule_impl) оборачивает `ScheduleService` из `feature_schedule_shared` и переводит ответ в старые `ScheduleDto` (кэш, виджет, уведомления не менялись). Ktor-клиент (`lib_network`) ходит через тот же `OkHttpClient`, так что интерцепторы и заголовки те же. Ошибки Ktor переводятся в `retrofit2.HttpException` и `SocketTimeoutException`, потому что на них смотрят `FindScheduleReducer` и `DashboardActor`. Проверено на эмуляторе: поиск, выбор группы А-03-25, неделя с парами. Поиск теперь отбрасывает `type: "student"` (API отдаёт студентов группы). Замену `ScheduleDto`/моделей `feature_schedule_api` на shared решено не делать.
-- **kotlinx-datetime 0.7.1 (важно для iOS):** Ktor тянет 0.7.1, там `kotlinx.datetime.Clock/Instant` стали typealias на `kotlin.time`; при объявленной 0.6.2 линковка фреймворка `:shared` падала с `IrTypeAliasSymbolImpl is already bound`. Версия в каталоге теперь 0.7.1, в общем коде `kotlin.time.Clock/Instant` (`@OptIn(ExperimentalTime)`). `LocalDate.until` в 0.7 возвращает `Long`.
-- **Побочный эффект Compose Multiplatform 1.9.3:** он жёстко (`strictly`) задаёт `androidx.compose.material3:1.4.0-beta01`,
-  поэтому всё Android-приложение теперь на этой бете вместо 1.3.2 из BOM. В 1.4 `material-icons-core` не подтягивается сам:
-  его нужно добавлять явно (`libs.compose.material.icons.core`) в модули, которые импортируют `androidx.compose.material.icons`.
-  Проверено на эмуляторе: онбординг, поиск, шрифт, цвета, сеть работают; экран расписания не открывали.
+- Последний коммит: `66551a8a` («расписание по одному дню с выбором дня; группа на Главной открывает поиск без потери выбранного»).
+  Всё закоммичено и запушено, незакоммиченных изменений нет.
+- **На момент записки CI по `66551a8a` ещё идёт** (Android ~7 мин, iOS ~25 мин). Первым делом в новой сессии:
+  `gh run list --limit 4`. Если iOS упал, смотреть `gh run view <id> --log-failed`: это почти наверняка ошибка компиляции Kotlin/Native
+  в общем коде (локально проверяются только `compileCommonMainKotlinMetadata` и `compileIosMainKotlinMetadata`, они не ловят всё).
+- Последняя работа: **сравнение iOS-версии с Android через Appetize** и правки по нему. Что нашли и что сделано:
+  - сделано: отступы системных панелей применяются один раз (`App.kt`, `WindowInsets.safeDrawing`, верх и бока); нижняя панель из
+    `ui_kit_navigationbar` с иконками `ui_icons`; пары — карточка `ClassCard`; расписание по одному дню с `DaySelector`;
+    тап по группе на Главной открывает поиск, выбранное расписание не стирается (`ScheduleController.startSearch/cancelSearch`, «Отмена»).
+  - **ещё не проверено глазами**: само расписание с выбором дня и новая Главная (они собираются, но в Appetize их не видели;
+    Appetize смотрел сборку `58c2a59b`, правки `66551a8a` в неё не вошли).
+- Минут Appetize на 31.10.2026 потрачено около 6–7 из 30 в месяц (счётчик сбрасывается раз в месяц); оставшиеся ~23 минуты беречь.
+  Вкладка Chrome с Appetize оставлена на главной странице `https://appetize.io/` (сессия симулятора закрыта).
 
-## Следующие шаги
+## 2. Что делать дальше (по приоритету)
 
-1. **M1, остаток:** системная кнопка «назад» на Android и свайп назад на iOS для `NavHost`. Старый `lib_elm_compose`
-   (ViewModel, Bundle) остаётся для Fragment-экранов Android и уйдёт, когда они станут Compose-экранами на `lib_elm_ui`.
-2. **M2** дизайн-система (`ui_theme`, `ui_kit_*`, иконки, шрифты, строки RU/EN → Compose Resources).
-3. **M3** расписание: самый большой этап, там же заменяются Retrofit → `MpeiScheduleApi`, `java.time` → `ext_datetime`,
-   `SharedPreferences` → `lib_settings`, Fragment/XML → Compose.
-4. Потом M4 (заметки, настройки, дашборд), M5 (карта, `osmdroid` на iOS не работает), M7 (уведомления, виджет, TestFlight).
-   Грубо ещё 30–35 срезов вида «модуль + тесты + CI».
+1. **Проверить `66551a8a`** (CI) и посмотреть iOS в Appetize (как, см. раздел 3): расписание с выбором дня, Главная, смена группы с «Отменой».
+2. **Довести внешний вид iOS до Android** (отличия, найденные при сравнении; ничего из этого не сделано):
+   - Главная: нет обратного отсчёта до пары («пара начнётся через …»), нет блока избранных расписаний и поля поиска по МЭИ, нет карточки «О приложении»;
+   - шрифты мельче, чем на Android (у Android название пары ~20sp жирным, время 18sp); у карточки нет «таблетки» типа занятия справа и кружка с номером пары;
+   - «Настройки» намного короче (на Android: тема, язык, уведомления, избранное, и т.д.); сделать длинный список с разделами и переключателями;
+   - «Заметки»: пустой экран с одной строкой; поиск группы и результаты — простой список без оформления;
+   - проверить **тёмную тему** (скриншоты разработчика с iPhone были в тёмной; Appetize смотрели в светлой);
+   - перевести заголовки, поля и пустые состояния на компоненты `ui_kit_*` (сейчас часть экранов на «голом» Material3).
+3. **Проверка на настоящем iPhone** (нужен владелец): напоминания (разрешение, срабатывание), фоновое обновление и уведомления о заменах
+   (`BGAppRefreshTask`, как запустить вручную — в `docs/IOS.md`), вход в БАРС с настоящим 2FA.
+4. **Мелкая очистка Android**: вызовы `Analytics` (~40 файлов) мёртвые, события никуда не уходят (`AnalyticsWrapper` пустой) — удалить совсем;
+   на карте на Android не проверены пинч и двойной тап (через `adb` не воспроизвести); запросы к GitHub несут `X-Device-Id` (при желании убрать).
+5. **Задачи из списка** (обновлять чекбоксы по мере готовности): #11 системная кнопка «назад» / свайп назад в `NavHost`; #12 шиммер (сделан, не сверен
+   визуально); #13 проверить ресурсы Compose в рантайме; #14 решение по Material3 1.4.0-beta01 (его навязывает Compose Multiplatform 1.9.3);
+   #15 M3 (расписание), #16 M4, #17 M5 (карта), #18 M7 — по сути закрыты, чекбоксы обновить; #19 проверка iOS в Appetize; #20 единый сетевой клиент
+   (`lib_bars_client` на `lib_http`, убрать `lib_bars` и Retrofit/OkHttp-слой).
+6. **Решено не делать** (не возвращаться без новой просьбы владельца): замена Android-моделей расписания (`feature_schedule_api`, `ScheduleDto`) на общие
+   (77 файлов, `java.time`, Bundle, виджет, будильники — пользы для iOS нет); Firebase на iOS и на Android (убран из обеих версий).
+7. **Отложено до решения владельца**: виджет WidgetKit (Swift, отдельное расширение; на бесплатном Apple ID App Groups ограничены, можно сделать вариант,
+   где виджет сам ходит в сеть по названию группы из своих настроек, но без устройства его нельзя проверить); TestFlight (нужен Apple Developer Program).
 
-## Как работать
+## 3. Чем проверять
 
-- **Проверка локально работает.** Проект лежит на пути без кириллицы (`C:\dev\MPEI Hub\mpei-next`).
-  `./gradlew :app:assembleDebug` (около 3 минут с нуля, собирает debug APK) и `./gradlew :<модуль>:jvmTest` проходят.
-  Android SDK: `C:\Users\rrust\AppData\Local\Android\Sdk` (платформа 36, build-tools 35.0.0, эмулятор и образы).
-- **Эмулятор:** AVD `Medium_Phone_API_37.0` и `Arca_API_30`. Запуск без окна:
-  `emulator.exe -avd Medium_Phone_API_37.0 -no-window -no-audio -no-snapshot -gpu swiftshader_indirect` (загрузка около
-  40 секунд), потом `adb install -r modules/app/build/outputs/apk/debug/MPEI-Hub-v0.5.2-debug.apk`, пакет `ru.mpei.hub.dev`,
-  скриншот `adb exec-out screencap -p > shot.png`. Холодный старт приложения около 10 секунд (сначала чёрный экран).
-  `adb input text` не умеет кириллицу.
-- **`local.properties`** лежит в `.gitignore`, в новой папке его нужно создать **с прямыми слэшами**:
-  `sdk.dir=C:/Users/rrust/AppData/Local/Android/Sdk`. Одинарные обратные слэши в `.properties` это экранирование,
-  путь превращается в мусор и сборка падает с `Invalid file path`.
-- **Кириллица в пути ломает JVM-тесты** (`ClassNotFoundException`, компиляция при этом проходит): держать проект на ASCII-пути.
-- **iOS компилируется и тестируется только в CI** (workflow `iOS`, macOS-раннер). Раннер иногда не находится 15 минут и
-  прогон отменяется без шагов: это не ошибка кода, достаточно `gh run rerun`.
-- **Kotlin/Native: в именах тестов нельзя `( ) , . ; : / < >`** (в обратных кавычках). Тесты `lib_bars_*` с запятыми проходят
-  только потому, что CI гоняет их на JVM.
-- `Dispatchers.IO` на Native — расширение (`kotlinx.coroutines.IO`), в общем коде через `expect/actual`.
-- Коммиты заканчиваются строкой `Co-Authored-By: Syberia <noreply@syberia.invalid>`. Пуш сразу в `main`.
-- **Issues:** на каждую текущую и оставшуюся задачу заводить GitHub Issue (русский текст: цель, объём с чекбоксами,
-  критерий готовности), чтобы другие разработчики видели, что осталось. Зонтичная задача: [#5](https://github.com/ghostoftheeleven/mpei-next/issues/5)
-  (статус в её начале), дочерние: #11 (кнопка «назад»), #12 (шиммер), #13 (проверка ресурсов), #14 (решение по Material3 beta),
-  #15 (M3 расписание), #16 (M4), #17 (M5 карта), #18 (M7), #19 (проверка iOS), #20 (единый сетевой клиент).
-  Закрывайте и обновляйте чекбоксы по мере готовности.
+### Android (локально, до пуша — Android Studio у владельца установлен, но всё делается и из консоли)
+- Сборка и тесты: `./gradlew :app:assembleDebug` (~3 мин с нуля), `./gradlew testDebugUnitTest` (~2,5 мин), `./gradlew :<модуль>:jvmTest` для общих модулей,
+  релиз с R8: `./gradlew :app:assembleRelease` (R8 с Ktor и ресурсами Compose проходит; релиз тоже запускали на эмуляторе).
+- Эмулятор без окна: `emulator.exe -avd Medium_Phone_API_37.0 -no-window -no-audio -no-snapshot -gpu swiftshader_indirect` (SDK:
+  `C:\Users\rrust\AppData\Local\Android\Sdk`), загрузка ~40 с, дальше `adb install -r modules/app/build/outputs/apk/debug/MPEI-Hub-v0.5.2-debug.apk`,
+  пакет `ru.mpei.hub.dev` (релиз — `ru.mpei.hub`), скриншот `adb exec-out screencap -p > shot.png`, холодный старт ~10–25 с (сначала чёрный экран).
+  Нижняя панель на экране 1080×2400: тапы по `y=2250`, `x=108/322/540/756/972` (Главная, Расписание, БАРС, Карта, Профиль).
+  `adb input text` не умеет кириллицу: группу искать цифрами (`03-25`) и выбирать подсказку. Группа А-03-25 имеет пары на этой неделе; у А-01-22 пар нет.
+  При диплинках на эмуляторе указывать пакет: `adb shell am start -p ru.mpei.hub.dev -a android.intent.action.VIEW -d 'mpeix://map?placeUid=…'`.
+- Демо UI-кита `ui_kit_demo`: `MapDemoActivity` показывает карту без остального приложения (`am start -n kekmech.ru.mpeiapp.demo/.MapDemoActivity`);
+  главный экран демо (`navigation3`) падает из-за конфликта `activity 1.12` и Compose UI 1.9 (было и до этих работ), в демо закреплён `activity 1.11`.
 
-## Ждём от владельца
+### iOS
+- **Локально собирается только общий код**: `./gradlew :shared:compileCommonMainKotlinMetadata :shared:compileIosMainKotlinMetadata`. Тесты общих модулей
+  идут на JVM (`:feature_schedule_shared:jvmTest`, `:feature_map_shared:jvmTest`, `:feature_notes_shared:jvmTest`, `:lib_settings:jvmTest` и т.д.); на iOS-симуляторе их гоняет CI.
+- **CI**: workflow `iOS` (macOS-раннер, 15–30 мин) собирает фреймворк и неподписанный `.ipa` и гоняет тесты на симуляторе; `Android` — ~2–7 мин.
+  Раннер macOS иногда не находится 15 минут и прогон отменяется без шагов — это не ошибка кода, `gh run rerun`.
+- **Посмотреть интерфейс iOS — через Appetize** (облачный симулятор; токен — секрет репозитория `APPETIZE_API_TOKEN`, я его не вижу, он нужен только workflow):
+  1. `gh workflow run "iOS Simulator"` (собирает `.app` под симулятор, ~25–31 мин, минуты Appetize не тратит); дождаться: `gh run watch <id>`.
+  2. `gh workflow run "Appetize Upload" -f run_id=<id запуска iOS Simulator>` (~10 с–9 мин). Публичный ключ приложения:
+     `gh run view <id загрузки> --log | grep -E "Appetize public key: [A-Za-z0-9_-]+" | grep -v '\${'`. Страница: `https://appetize.io/app/<ключ>`
+     (приложение приватное, открывается только владельцу аккаунта; ключ не секретный, `privateKey` в логи не печатать).
+  3. Открыть страницу в Chrome (плагин Claude in Chrome, своя вкладка через `navigate`; вход в Appetize у владельца уже есть). По умолчанию там iPhone 14 Pro, iOS 17.2.
+  4. **Лимит владельца: 30 минут симулятора в месяц.** Время идёт, пока открыта сессия («Tap to Start»). Заранее расписать маршрут, делать **один короткий проход
+     через `browser_batch`** (клик, пауза, `zoom` по области телефона), потом **сразу уйти на другую страницу** (навигация на `https://appetize.io/` закрывает сессию).
+     Рекомендуемый проход (6–7 мин): Главная без группы → Расписание (поле поиска, ввод `03-25`, подождать ~6 с, тап по «А-03-25») → Главная → Заметки → Карта → БАРС → «Настройки»
+     (кнопка на Главной). Экран телефона в окне ~230×460 px, поэтому снимать `zoom` по региону телефона; координаты вкладок нижней панели считать от первого снимка.
+     Ввод с клавиатуры хозяина проходит в симулятор (кириллицу не проверяли).
+  5. Эталон Android снимать на эмуляторе тех же экранов (см. выше) и сравнивать по списку отличий из раздела 2.
+- Скриншоты настоящего iPhone (тёмная тема) владелец присылает из CI-артефакта `ios-ipa-unsigned` через Sideloadly (инструкция в `docs/IOS.md`).
 
-- Проверка `.ipa` на iPhone/iPad (iOS 15+, режим разработчика, отдельный Apple ID, Sideloadly, iTunes/iCloud с сайта Apple).
+## 4. Что есть в коде (кратко, по модулям)
+
+Общий код живёт в KMP-модулях (цели jvm + iosArm64 + iosSimulatorArm64, конвенция `mpeix.lib.kmp`; с Android-таргетом — `mpeix.lib.kmp.android`).
+- **Фундамент (M1):** `ext_kotlin`, `ext_koin`, `lib_coroutines`, `lib_elm`, `ext_datetime`, `lib_settings` (`KeyValueStore`: `NSUserDefaults` на iOS, адаптер
+  `SharedPreferences` в `ext_shared_preferences`), `lib_http` (Ktor + каталог `BackendServiceUrl`, в нём `APP_CONFIG`, `MAP`, `MPEI_TIMETABLE`),
+  `lib_mpei_api`, `lib_navigator`, `lib_navigator_compose`, `lib_elm_ui`.
+- **Дизайн (M2):** `ui_theme` (палитра, шрифты Roboto), `ui_kit_*` (навигация, кнопки, диалоги, списки, переключатели…), `ui_icons`, `ui_shimmer`, `ui_map` (см. ниже).
+- **Расписание (M3), `feature_schedule_shared`:** модели (`@Serializable`), `MpeiScheduleMapper`, `ScheduleService` (кэш id под `Mutex`, студенты отфильтрованы),
+  `ScheduleCache`, `FavoriteSchedules`, `ScheduleController`, `WeekLoader` (неделя из сети или из копии), `DashboardController` + `upcomingClasses`,
+  `ClassReminderPlanner`/`RemindersController`, `ScheduleChangeDetector`/`ScheduleChangeText`/`ScheduleSnapshots`/`ScheduleChangeChecker`/`ScheduleBackgroundSync`.
+  Android ходит в сеть через `KtorScheduleService` (обёртка над общим сервисом, отдаёт старые `ScheduleDto`; ошибки Ktor переводятся в `retrofit2.HttpException`/`SocketTimeoutException`).
+- **Заметки (M4):** `feature_notes_shared` (JSON в `KeyValueStore`; Android остаётся на Room).
+- **Карта (M5):** `feature_map_shared` (`MapMarkersRepository`, `MapController`, `WebMercator`, `MapCamera`) и `ui_map` (`MpeiMap`, `MapScreen`, `TileLoader`, `MarkerIcons`).
+  **Android `MapFragment` тоже на `MapScreen`** (`osmdroid`, ELM-стор карты, шторка, `lib_emoji` удалены); поиск мест (`feature_search`) всё ещё берёт метки из старого `MapRepository`.
+  Тайлы грузит отдельный клиент `tileHttpClient` без `X-Device-Id` (на обеих платформах).
+- **БАРС (M6):** `feature_bars_shared`, `lib_bars_client`, `lib_bars_parser`; на iOS сессия в Keychain.
+- **iOS-оболочка:** `modules/shared` — `App`, `AppDependencies` (всё, из чего собрано приложение), `IosAppGraph`, экраны (`dashboard`, `schedule`, `notes`, `settings`, `bars`, `ClassCard`,
+  `AppNavigationBar`), `IosReminderScheduler`, `IosChangeNotifier`, `IosBackground`; Swift: `iosApp/iosApp/` (`iOSApp.swift`, `ContentView.swift`, `BackgroundRefresh.swift`), проект генерирует XcodeGen из `iosApp/project.yml`.
+- **Настройки без выпуска версии:** `statics/app/config.json` (принудительное обновление, тоггл снежинок; читает `RepoRemoteConfig` на Android). **Firebase нет нигде**, README это утверждает и это правда.
+
+## 5. Подводные камни (не наступать снова)
+
+- **kotlinx-datetime 0.7.1:** Ktor тянет 0.7.1, там `Clock`/`Instant` — typealias на `kotlin.time`; с объявленной 0.6.2 линковка iOS падала (`IrTypeAliasSymbolImpl is already bound`).
+  В общем коде только `kotlin.time.Clock/Instant` с `@OptIn(ExperimentalTime)`. `LocalDate.until` возвращает `Long`.
+- **Kotlin/Native: в именах тестов (в обратных кавычках) нельзя `( ) , . ; : / < >`.**
+- **Тесты контроллеров:** `MockEngine` Ktor отвечает на реальном диспетчере — ждать через `settle` (`advanceUntilIdle` + реальная пауза); для корутин из `backgroundScope`
+  без сети вместо `advanceUntilIdle()` нужен `runCurrent()` (иначе фоновые задачи не запускаются).
+- **GitHub raw отдаёт `text/plain`:** Ktor-десериализатор не сработает, читать `bodyAsText()` и разбирать вручную.
+- **Отступы iOS:** один раз в `App.kt` (`safeDrawing`, верх и бока). Не `safeContent`: он включает зоны жестов и даёт боковые поля. Экраны отступы сами не добавляют.
+- **Compose Multiplatform 1.9.3** жёстко задаёт `material3:1.4.0-beta01` для всего Android-приложения; `material-icons-core` в 1.4 нужно добавлять явно.
+- **`local.properties`** (в `.gitignore`) создавать с прямыми слэшами: `sdk.dir=C:/Users/rrust/AppData/Local/Android/Sdk`.
+- **Кириллица в пути ломает JVM-тесты** (компиляция проходит, тесты падают с `ClassNotFoundException`).
+- **Python в этой среде нет** (заглушка Microsoft Store): правки делать `sed`/`perl`/инструментами Edit и Write; длинные heredoc с кириллицей в bash иногда обрываются — писать файл инструментом Write.
+- Перед правкой большого экрана читать его целиком: серия `sed`-вставок уже ломала файлы (метод оказывался не в том классе).
+
+## 6. Ждём от владельца
+
+- Проверка `.ipa` на iPhone/iPad (iOS 15+, режим разработчика, отдельный Apple ID, Sideloadly, iTunes/iCloud с сайта Apple): напоминания, фон, БАРС с 2FA, тёмная тема.
 - Позиция ИВЦ МЭИ по доступу к БАРС из приложения (влияет на публикацию в сторах).
-- Apple Developer Program для TestFlight (оплата из России проблематична).
-- Вне плана iOS: задачи #8 (подготовка Android к сторам) и #9 (ветка `master` нужна установленным v0.5.x).
+- Apple Developer Program для TestFlight и виджета (оплата из России проблематична).
+- Решение: нужен ли виджет iOS (и в каком виде), нужно ли удалять мёртвые вызовы `Analytics` на Android.
+- Вне плана iOS: задачи #8 (подготовка Android к сторам; секрет `GOOGLE_SERVICES` в GitHub больше не нужен, его можно удалить) и #9 (ветка `master` нужна установленным v0.5.x).
