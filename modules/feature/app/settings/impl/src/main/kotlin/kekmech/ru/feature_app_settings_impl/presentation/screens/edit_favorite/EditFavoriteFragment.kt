@@ -17,12 +17,10 @@ import kekmech.ru.ext_kotlin.fastLazy
 import kekmech.ru.feature_app_settings_impl.R
 import kekmech.ru.feature_app_settings_impl.databinding.FragmentEditFavoriteBinding
 import kekmech.ru.feature_favorite_schedule_api.domain.model.FavoriteSchedule
-import kekmech.ru.lib_analytics_android.ext.screenAnalytics
 
 internal class EditFavoriteFragment : Fragment(R.layout.fragment_edit_favorite) {
 
     private val viewBinding by viewBinding(FragmentEditFavoriteBinding::bind)
-    private val analytics by screenAnalytics("EditFavorite")
     private val resultKey by fastLazy { notNullStringArg(ArgResultKey) }
     private val favoriteSchedule by fastLazy {
         notNullSerializableArg<FavoriteSchedule>(ArgFavoriteSchedule)
@@ -43,7 +41,6 @@ internal class EditFavoriteFragment : Fragment(R.layout.fragment_edit_favorite) 
             groupText.setSelection(favoriteSchedule.description.length)
             groupText.showKeyboard()
             buttonContinue.setOnClickListener {
-                analytics.sendClick("SaveFavoriteDescription")
                 close()
                 hideKeyboard()
                 setResult(

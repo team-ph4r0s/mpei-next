@@ -14,8 +14,6 @@ import kekmech.ru.feature_onboarding_impl.presentation.item.PromoPage
 import kekmech.ru.feature_onboarding_impl.presentation.item.PromoPageAdapterItem
 import kekmech.ru.feature_schedule_api.ScheduleFeatureApi.ContinueTo.DASHBOARD
 import kekmech.ru.lib_adapter.BaseAdapter
-import kekmech.ru.lib_analytics_android.addScrollAnalytics
-import kekmech.ru.lib_analytics_android.ext.screenAnalytics
 import kekmech.ru.lib_navigation.AddScreenForward
 import kekmech.ru.lib_navigation.Router
 import org.koin.android.ext.android.inject
@@ -24,7 +22,6 @@ internal class WelcomeFragment : Fragment(R.layout.fragment_welcome) {
 
     private val dependencies by inject<OnboardingDependencies>()
     private val scheduleFeatureLauncher by fastLazy { dependencies.scheduleFeatureApi }
-    private val analytics by screenAnalytics("OnboardingWelcome")
     private val adapter by fastLazy { createAdapter() }
     private val snapHelper by fastLazy { PagerSnapHelper() }
     private val pages by fastLazy { PromoPage.entries }
@@ -35,7 +32,6 @@ internal class WelcomeFragment : Fragment(R.layout.fragment_welcome) {
         super.onViewCreated(view, savedInstanceState)
         viewBinding.apply {
             buttonStart.setOnClickListener {
-                analytics.sendClick("WelcomeStart")
                 router.executeCommand(AddScreenForward {
                     scheduleFeatureLauncher.getSearchGroupScreen(DASHBOARD, resultKey = "")
                 })
@@ -44,7 +40,6 @@ internal class WelcomeFragment : Fragment(R.layout.fragment_welcome) {
             recycler.layoutManager =
                 LinearLayoutManager(requireContext(), LinearLayoutManager.HORIZONTAL, false)
             recyclerDots.attachToRecyclerView(recycler)
-            recycler.addScrollAnalytics(analytics, "PromoPager")
             snapHelper.attachToRecyclerView(recycler)
         }
         adapter.update(pages)

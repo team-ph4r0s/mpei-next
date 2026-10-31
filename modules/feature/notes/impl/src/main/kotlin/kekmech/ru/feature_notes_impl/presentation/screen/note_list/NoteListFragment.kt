@@ -28,7 +28,6 @@ import kekmech.ru.feature_notes_impl.presentation.screen.note_list.elm.NoteListE
 import kekmech.ru.feature_notes_impl.presentation.screen.note_list.elm.NoteListState
 import kekmech.ru.feature_schedule_api.domain.model.Classes
 import kekmech.ru.lib_adapter.BaseAdapter
-import kekmech.ru.lib_analytics_android.ext.screenAnalytics
 import kekmech.ru.lib_navigation.addScreenForward
 import money.vivid.elmslie.android.renderer.ElmRendererDelegate
 import money.vivid.elmslie.android.renderer.androidElmStore
@@ -42,7 +41,6 @@ internal class NoteListFragment :
 
     private val dependencies by inject<NotesDependencies>()
     private val adapter by fastLazy { createAdapter() }
-    private val analytics by screenAnalytics("NoteList")
     private val viewBinding by viewBinding(FragmentNoteListBinding::bind)
     private val resultKey by fastLazy { notNullStringArg(ARG_RESULT_KEY) }
     private val listConverter by fastLazy { NoteListConverter(requireContext()) }
@@ -60,7 +58,6 @@ internal class NoteListFragment :
             recyclerView.layoutManager = LinearLayoutManager(requireContext())
             recyclerView.adapter = adapter
             recyclerView.attachSwipeToDeleteCallback(isItemForDelete = { it is Note }) { note ->
-                analytics.sendClick("DeleteNote")
                 store.accept(Ui.Action.DeleteNote(note as Note))
             }
         }
@@ -94,11 +91,9 @@ internal class NoteListFragment :
         PullAdapterItem(),
         SectionHeaderAdapterItem(),
         NoteAdapterItem(requireContext()) {
-            analytics.sendClick("EditNote")
             store.accept(Ui.Click.EditNote(it))
         },
         AddActionAdapterItem {
-            analytics.sendClick("NewNote")
             store.accept(Ui.Click.CreateNewNote)
         },
         SpaceAdapterItem()

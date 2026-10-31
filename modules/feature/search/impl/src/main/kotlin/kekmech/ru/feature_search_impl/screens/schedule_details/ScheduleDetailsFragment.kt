@@ -33,7 +33,6 @@ import kekmech.ru.feature_search_impl.screens.schedule_details.elm.ScheduleDetai
 import kekmech.ru.feature_search_impl.screens.schedule_details.elm.ScheduleDetailsStoreFactory
 import kekmech.ru.lib_adapter.AdapterItem
 import kekmech.ru.lib_adapter.BaseAdapter
-import kekmech.ru.lib_analytics_android.ext.screenAnalytics
 import kekmech.ru.lib_navigation.BottomTab
 import kekmech.ru.lib_navigation.BottomTabsSwitcher
 import kekmech.ru.lib_navigation.ClearBackStack
@@ -58,7 +57,6 @@ internal class ScheduleDetailsFragment :
     private val adapter by fastLazy { createAdapter() }
     private val router by inject<Router>()
     private val bottomTabsSwitcher by inject<BottomTabsSwitcher>()
-    private val analytics by screenAnalytics("SearchScheduleDetails")
 
     private val store by androidElmStore {
         inject<ScheduleDetailsStoreFactory>().value.create(
@@ -108,13 +106,11 @@ internal class ScheduleDetailsFragment :
         ShimmerAdapterItem(R.layout.item_week_shimmer),
         ShimmerAdapterItem(R.layout.item_classes_shimmer),
         ButtonAdapterItem(ITEM_BUTTON_SWITCH, R.layout.item_button) {
-            analytics.sendClick("SwitchSchedule")
             store.accept(Ui.Click.SwitchSchedule)
         },
         TextWithIconAdapterItem {
             when (it.itemId) {
                 ITEM_FAVORITES -> {
-                    analytics.sendClick("AddToFavorites")
                     store.accept(Ui.Click.Favorites)
                 }
 

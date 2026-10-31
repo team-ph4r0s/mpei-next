@@ -37,7 +37,6 @@ import kekmech.ru.feature_schedule_impl.presentation.screen.find_schedule.elm.Fi
 import kekmech.ru.feature_schedule_impl.presentation.screen.main.elm.ScheduleActor
 import kekmech.ru.feature_schedule_impl.presentation.screen.main.elm.ScheduleStoreFactory
 import kekmech.ru.feature_schedule_impl.presentation.widget.ScheduleGlanceWidgetUpdater
-import kekmech.ru.lib_analytics_api.SelectedScheduleAnalyticsProvider
 import kekmech.ru.lib_app_lifecycle.AppLifecycleObserver
 import org.koin.android.ext.koin.androidContext
 import org.koin.core.module.dsl.factoryOf
@@ -65,7 +64,6 @@ val FeatureScheduleModule = module {
     }
     singleOf(::ScheduleRepositoryImpl) binds arrayOf(
         ScheduleRepository::class,
-        SelectedScheduleAnalyticsProvider::class,
         PreheatSelectedScheduleProvider::class,
     )
     factoryOf(::ScheduleSearchRepositoryImpl) bind ScheduleSearchRepository::class

@@ -22,7 +22,6 @@ import kekmech.ru.feature_app_settings_impl.presentation.screens.map_type.dto.Ma
 import kekmech.ru.feature_app_settings_impl.presentation.screens.map_type.item.MapTypeAdapterItem
 import kekmech.ru.feature_app_settings_impl.presentation.screens.map_type.item.MapTypeItem
 import kekmech.ru.lib_adapter.BaseAdapter
-import kekmech.ru.lib_analytics_android.ext.screenAnalytics
 import kekmech.ru.res_strings.R.string as Strings
 
 internal class SelectMapTypeFragment :
@@ -31,7 +30,6 @@ internal class SelectMapTypeFragment :
     private val viewBinding by viewBinding(FragmentSelectMapTypeBinding::bind)
     private val adapter by fastLazy { createAdapter() }
     private val selectMapType by fastLazy { notNullStringArg(ARG_SELECTED_MAP_TYPE) }
-    private val analytics by screenAnalytics("SelectMapType")
     private val resultKey by fastLazy { notNullStringArg(ARG_RESULT_KEY) }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -64,7 +62,6 @@ internal class SelectMapTypeFragment :
         SectionHeaderAdapterItem(),
         SpaceAdapterItem(),
         MapTypeAdapterItem {
-            analytics.sendClick("SelectMapType_${it.mapTypeCode}")
             if (it.mapTypeCode == selectMapType) {
                 close()
             } else {

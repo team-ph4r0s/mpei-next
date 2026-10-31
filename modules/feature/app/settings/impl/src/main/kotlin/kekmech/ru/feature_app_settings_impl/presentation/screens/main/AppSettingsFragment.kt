@@ -36,7 +36,6 @@ import kekmech.ru.feature_app_settings_impl.presentation.screens.main.list.Contr
 import kekmech.ru.feature_app_settings_impl.presentation.screens.map_type.SelectMapTypeFragment
 import kekmech.ru.feature_bars_api.BarsLogoutHandle
 import kekmech.ru.lib_adapter.BaseAdapter
-import kekmech.ru.lib_analytics_android.ext.screenAnalytics
 import kekmech.ru.lib_navigation.addScreenForward
 import kekmech.ru.lib_navigation.showDialog
 import money.vivid.elmslie.android.renderer.ElmRendererDelegate
@@ -51,7 +50,6 @@ internal class AppSettingsFragment :
     ElmRendererDelegate<AppSettingsEffect, AppSettingsState> {
 
     private val adapter by fastLazy { createAdapter() }
-    private val analytics by screenAnalytics("AppSettings")
     private val viewBinding by viewBinding(FragmentAppSettingsBinding::bind)
     private val logoutHandle by inject<BarsLogoutHandle>()
 
@@ -112,19 +110,15 @@ internal class AppSettingsFragment :
         BaseAdapter(
             SectionHeaderAdapterItem(),
             ToggleAdapterItem(TOGGLE_DARK_THEME) {
-                analytics.sendChangeSetting("DarkTheme", it.toString())
                 store.accept(Ui.Action.SetDarkThemeEnabled(it))
             },
             ToggleAdapterItem(TOGGLE_AUTO_HIDE_BOTTOM_SHEET) {
-                analytics.sendChangeSetting("AutoHideMapBottomSheet", it.toString())
                 store.accept(Ui.Action.SetAutoHideBottomSheet(it))
             },
             ToggleAdapterItem(TOGGLE_SNOW_FLAKES) {
-                analytics.sendChangeSetting("SnowFlakes", it.toString())
                 store.accept(Ui.Action.SetSnowEnabled(it))
             },
             ToggleAdapterItem(TOGGLE_SHOW_NAV_FAB) {
-                analytics.sendChangeSetting("ShowQuickNavFab", it.toString())
                 store.accept(Ui.Action.SetShowQuickNavigationFab(it))
             },
             TextAdapterItem(),
@@ -139,27 +133,22 @@ internal class AppSettingsFragment :
     private fun onItemClick(itemId: Int?) =
         when (itemId) {
             ITEM_GITHUB -> {
-                analytics.sendClick("GitHub")
                 requireContext().openLinkExternal("https://github.com/tonykolomeytsev/mpeiapp")
             }
 
             ITEM_FAVORITES -> {
-                analytics.sendClick("Favorites")
                 addScreenForward { FavoritesFragment() }
             }
 
             ITEM_LANGUAGE -> {
-                analytics.sendClick("SelectLanguage")
                 store.accept(Ui.Click.Language)
             }
 
             ITEM_MAP_TYPE -> {
-                analytics.sendClick("SelectMapType")
                 store.accept(Ui.Click.MapType)
             }
 
             ITEM_BARS_LOGOUT -> {
-                analytics.sendClick("BarsLogout")
                 if (logoutHandle.logout()) {
                     Toast
                         .makeText(requireContext(), "Вы вышли из БАРС", Toast.LENGTH_SHORT)

@@ -35,7 +35,6 @@ import kekmech.ru.feature_search_impl.screens.schedule_details.ScheduleDetailsFr
 import kekmech.ru.lib_adapter.AdapterItem
 import kekmech.ru.lib_adapter.BaseAdapter
 import kekmech.ru.lib_adapter.BaseItemBinder
-import kekmech.ru.lib_analytics_android.ext.screenAnalytics
 import kekmech.ru.lib_navigation.BottomTab
 import kekmech.ru.lib_navigation.BottomTabsSwitcher
 import kekmech.ru.lib_navigation.showDialog
@@ -62,7 +61,6 @@ internal class SearchFragment : Fragment(R.layout.fragment_search),
     private val dependencies by inject<SearchDependencies>()
     private val adapter by fastLazy { createAdapter() }
     private val filterItemsAdapter by fastLazy { createFilterItemsAdapter() }
-    private val analytics by screenAnalytics("Search")
     private val bottomTabsSwitcher by inject<BottomTabsSwitcher>()
     private val viewBinding by viewBinding(FragmentSearchBinding::bind)
 
@@ -127,11 +125,9 @@ internal class SearchFragment : Fragment(R.layout.fragment_search),
         SpaceAdapterItem(),
         SectionHeaderAdapterItem(),
         NoteAdapterItem(requireContext()) {
-            analytics.sendClick("SearchNote")
             dependencies.notesFeatureLauncher.launchAllNotes(it)
         },
         MapMarkerAdapterItem {
-            analytics.sendClick("SearchMarker")
             navigateToMapMarker(it)
         },
         AdapterItem(
@@ -143,7 +139,6 @@ internal class SearchFragment : Fragment(R.layout.fragment_search),
                     vh.setMainText(model.name)
                     vh.setLabel(model.description)
                     vh.setOnClickListener {
-                        analytics.sendClick("ScheduleDetails")
                         openScheduleDetails(model)
                     }
                 }
@@ -154,7 +149,6 @@ internal class SearchFragment : Fragment(R.layout.fragment_search),
 
     private fun createFilterItemsAdapter() = BaseAdapter(
         FilterAdapterItem {
-            analytics.sendClick("SearchFilter_${it.type}")
             store.accept(SearchEvent.Ui.Action.SelectFilter(it))
         }
     )

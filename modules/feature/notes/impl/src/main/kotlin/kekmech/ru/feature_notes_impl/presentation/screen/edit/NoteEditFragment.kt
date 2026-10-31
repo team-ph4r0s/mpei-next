@@ -25,7 +25,6 @@ import kekmech.ru.feature_notes_impl.presentation.screen.edit.elm.NoteEditEffect
 import kekmech.ru.feature_notes_impl.presentation.screen.edit.elm.NoteEditEvent.Ui
 import kekmech.ru.feature_notes_impl.presentation.screen.edit.elm.NoteEditState
 import kekmech.ru.lib_adapter.BaseAdapter
-import kekmech.ru.lib_analytics_android.ext.screenAnalytics
 import money.vivid.elmslie.android.renderer.ElmRendererDelegate
 import money.vivid.elmslie.android.renderer.androidElmStore
 import org.koin.android.ext.android.inject
@@ -36,7 +35,6 @@ internal class NoteEditFragment :
     ElmRendererDelegate<NoteEditEffect, NoteEditState> {
 
     private val dependencies: NotesDependencies by inject()
-    private val analytics by screenAnalytics("NoteEdit")
     private val adapter by fastLazy {
         BaseAdapter(NoteEditAdapterItem(::onNoteContentChanged))
     }
@@ -56,7 +54,6 @@ internal class NoteEditFragment :
         viewBinding.apply {
             toolbar.setNavigationOnClickListener { close() }
             buttonSave.setOnClickListener {
-                analytics.sendClick("SaveNote")
                 store.accept(Ui.Click.SaveNote)
             }
             recyclerView.layoutManager =
