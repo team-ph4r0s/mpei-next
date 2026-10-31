@@ -3,6 +3,7 @@ package kekmech.ru.feature_bars_impl.presentation.screen.main_compose.summary
 import android.content.Context
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.requiredSize
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -24,6 +25,7 @@ import kekmech.ru.feature_bars_impl.domain.ControlActivity
 import kekmech.ru.feature_bars_impl.domain.ExceptionWithId
 import kekmech.ru.feature_bars_impl.domain.FinalGrade
 import kekmech.ru.feature_bars_impl.domain.FinalGradeType
+import kekmech.ru.lib_elm.Resource
 import kekmech.ru.res_strings.R.string as Strings
 import kekmech.ru.ui_theme.color.DarkMpeixPalette
 import kekmech.ru.ui_theme.color.LightMpeixPalette
@@ -133,6 +135,33 @@ class SummaryContentTest {
         showCard(darkTheme = true, width = 520.dp)
         assertCollapsedThenExpand()
         composeRule.onNodeWithTag(CARD_TAG).assertWidthIsEqualTo(520.dp)
+    }
+
+    /** Two disciplines with one name in a semester used to crash the list with "Key was already used". */
+    @Test
+    fun list_twoDisciplinesWithOneNameDoNotCrash() {
+        composeRule.setContent {
+            Box(Modifier.requiredSize(360.dp, 900.dp)) {
+                MpeixTheme(darkTheme = false) {
+                    LazyColumn {
+                        summaryItems(
+                            summary = Resource.Data(listOf(summary, summary)),
+                            expanded = emptySet(),
+                            onToggle = {},
+                            onRetry = {},
+                        )
+                    }
+                }
+            }
+        }
+
+        composeRule.onAllNodesWithText(discipline.name).assertCountEquals(2)
+    }
+
+    /** The mark "expanded" is kept per card, not per name. */
+    @Test
+    fun key_isUniqueForTheSameName() {
+        assertTrue(summaryKey(0, "Физика") != summaryKey(1, "Физика"))
     }
 
     @Test

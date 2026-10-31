@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
@@ -87,11 +88,14 @@ internal fun LazyListScope.summaryItems(
                     )
                 }
             } else {
-                items(summary.value, key = { "summary_${it.name}" }) { discipline ->
+                // The same discipline can be twice in one semester (a lecture course and its exam), so the name alone
+                // is not a key: a repeated key crashes the list
+                itemsIndexed(summary.value, key = { index, it -> summaryKey(index, it.name) }) { index, discipline ->
+                    val id = summaryKey(index, discipline.name)
                     SummaryDisciplineCard(
                         discipline = discipline,
-                        isExpanded = discipline.name in expanded,
-                        onClick = { onToggle(discipline.name) },
+                        isExpanded = id in expanded,
+                        onClick = { onToggle(id) },
                         modifier = Modifier.cardModifier(),
                     )
                 }
@@ -99,6 +103,9 @@ internal fun LazyListScope.summaryItems(
         }
     }
 }
+
+/** The key of a card of the summary and the mark of it being expanded: unique even for two disciplines with one name. */
+internal fun summaryKey(index: Int, name: String): String = "summary_${index}_$name"
 
 internal fun Modifier.cardModifier(): Modifier =
     padding(horizontal = 8.dp).padding(bottom = 8.dp)

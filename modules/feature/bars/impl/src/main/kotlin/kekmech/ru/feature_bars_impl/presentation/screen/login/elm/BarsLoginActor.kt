@@ -34,6 +34,8 @@ import kekmech.ru.feature_bars_impl.presentation.screen.login.elm.BarsLoginComma
 import kekmech.ru.feature_bars_impl.presentation.screen.login.elm.BarsLoginEvent as Event
 
 private const val TWO_FACTOR_DEBOUNCE_SEC = 30
+private const val MAX_AUTO_WAIT_SEC = 60
+private const val MILLIS_IN_SECOND = 1000L
 
 internal class BarsLoginActor(
     private val router: Router,
@@ -100,8 +102,18 @@ internal class BarsLoginActor(
                 activeRequestCodeDeferred = deferred
                 try {
                     val page = requireNotNull(barsRepository.twoFactorPage) { "The sign-in is not waiting for a code" }
-                    val result = api.sendCode(page.providerFor(command.provider))
-                    if (result.success == false || result.error != null) error("Unable to send code")
+                    var result = api.sendCode(page.providerFor(command.provider))
+                    // BARS lets one code be sent per half a minute for all the ways together; the code of the default way is sent
+                    // when the page opens, so a tap on another way soon after it waits for the limit and asks once more
+                    val wait = result.retryAfterSeconds
+                    if (wait != null && wait <= MAX_AUTO_WAIT_SEC) {
+                        Timber.w("BARS sendCode %s: the limit, waiting %s s", command.provider, wait)
+                        delay((wait + 1) * MILLIS_IN_SECOND)
+                        result = api.sendCode(page.providerFor(command.provider))
+                    }
+                    // the text of BARS goes to the log and to the error: it says why the code was not sent (a limit, no such messenger)
+                    Timber.w("BARS sendCode %s: success=%s, error=%s, message=%s", command.provider, result.success, result.error, result.message)
+                    if (result.success == false || result.error != null) error(result.error ?: "Unable to send code")
                     deferred.complete(Unit)
                     result.message
                 } catch (e: Throwable) {
