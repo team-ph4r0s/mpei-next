@@ -24,7 +24,6 @@ import kekmech.ru.feature_app_settings_impl.presentation.screens.lang.dto.Langua
 import kekmech.ru.feature_app_settings_impl.presentation.screens.lang.item.LanguageAdapterItem
 import kekmech.ru.feature_app_settings_impl.presentation.screens.lang.item.LanguageItem
 import kekmech.ru.lib_adapter.BaseAdapter
-import kekmech.ru.lib_analytics_android.ext.screenAnalytics
 import kekmech.ru.coreui.R as coreui_R
 import kekmech.ru.res_strings.R.string as Strings
 
@@ -33,7 +32,6 @@ internal class SelectLanguageFragment : BottomSheetDialogFragment(R.layout.fragm
     private val viewBinding by viewBinding(FragmentChangeLanguageBinding::bind)
     private val adapter by fastLazy { createAdapter() }
     private val selectLanguage by fastLazy { notNullStringArg(ARG_SELECTED_LANG) }
-    private val analytics by screenAnalytics("SelectLanguage")
     private val resultKey by fastLazy { notNullStringArg(ARG_RESULT_KEY) }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -77,7 +75,6 @@ internal class SelectLanguageFragment : BottomSheetDialogFragment(R.layout.fragm
             SpaceAdapterItem(),
             TextAdapterItem(),
             LanguageAdapterItem {
-                analytics.sendClick("SelectLanguage_${it.languageCode}")
                 if (it.languageCode == selectLanguage) {
                     close()
                 } else {

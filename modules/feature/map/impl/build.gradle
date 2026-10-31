@@ -24,7 +24,6 @@ dependencies {
 
     implementation(project(":ext_koin"))
     implementation(project(":ext_shared_preferences"))
-    implementation(project(":lib_analytics_android"))
     implementation(project(":lib_app_info"))
     implementation(project(":lib_fragment"))
     implementation(project(":lib_navigation"))

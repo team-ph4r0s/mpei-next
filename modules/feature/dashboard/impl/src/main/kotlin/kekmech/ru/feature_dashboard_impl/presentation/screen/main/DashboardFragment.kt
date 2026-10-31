@@ -45,8 +45,6 @@ import kekmech.ru.feature_schedule_api.ScheduleFeatureApi
 import kekmech.ru.feature_schedule_api.domain.model.Classes
 import kekmech.ru.feature_schedule_api.domain.model.SelectedSchedule
 import kekmech.ru.lib_adapter.BaseAdapter
-import kekmech.ru.lib_analytics_android.addScrollAnalytics
-import kekmech.ru.lib_analytics_android.ext.screenAnalytics
 import kekmech.ru.lib_navigation.AddScreenForward
 import kekmech.ru.lib_navigation.BottomTab
 import kekmech.ru.lib_navigation.Router
@@ -68,7 +66,6 @@ internal class DashboardFragment :
 
     private val dependencies by inject<DashboardDependencies>()
     private val adapter by fastLazy { createAdapter() }
-    private val analytics by screenAnalytics("Dashboard")
     private var isUserRefresh = false
     private val viewBinding by viewBinding(FragmentDashboardBinding::bind)
     private val router by inject<Router>()
@@ -83,7 +80,6 @@ internal class DashboardFragment :
             recyclerView.layoutManager = LinearLayoutManager(requireContext())
             recyclerView.adapter = adapter
             recyclerView.addSystemVerticalPadding()
-            recyclerView.addScrollAnalytics(analytics, "DashboardRecyclerView")
             swipeRefresh.apply {
                 setOnRefreshListener {
                     isUserRefresh = true
@@ -145,11 +141,9 @@ internal class DashboardFragment :
     private fun createAdapter() = BaseAdapter(
         SpaceAdapterItem(),
         SearchFieldAdapterItem {
-            analytics.sendClick("Search")
             dependencies.searchFeatureLauncher.launch()
         },
         BannerLunchAdapterItem {
-            analytics.sendClick("BannerLunch")
             dependencies.bottomTabsSwitcher.changeTab(BottomTab.MAP)
         },
         BannerEolAdapterItem {
@@ -157,15 +151,12 @@ internal class DashboardFragment :
         },
         SectionHeaderAdapterItem(),
         SectionHeaderAdapterItem(SECTION_NOTES_ACTION) {
-            analytics.sendClick("ShowAllNotes")
             dependencies.notesFeatureLauncher.launchAllNotes()
         },
         SectionHeaderAdapterItem(SECTION_FAVORITES_ACTION) {
-            analytics.sendClick("SetUpFavorites")
             dependencies.appSettingsFeatureLauncher.launch(AppSettingsFeatureLauncher.SubPage.FAVORITES)
         },
         NoteAdapterItem(requireContext()) {
-            analytics.sendClick("EditNote")
             parentFragment?.setResultListener<EmptyResult>(
                 key = EDIT_NOTE_RESULT_KEY,
                 resultMapper = Bundle::notNullSerializable,
@@ -181,7 +172,6 @@ internal class DashboardFragment :
         DayStatusAdapterItem(),
         DashboardClassesAdapterItem(requireContext(), ::clickOnClasses),
         ScheduleTypeAdapterItem {
-            analytics.sendClick("ChangeGroup")
             parentFragment?.setResultListener<SelectedSchedule>(
                 key = FIND_GROUP_RESULT_KEY,
                 resultMapper = Bundle::notNullSerializable,
@@ -197,20 +187,17 @@ internal class DashboardFragment :
         },
         EmptyStateAdapterItem(),
         FavoriteScheduleAdapterItem {
-            analytics.sendClick("FavoriteSchedule")
             store.accept(DashboardEvent.Ui.Action.SelectFavoriteSchedule(it.value))
         },
         NotePreviewAdapterItem(::clickOnClasses, R.layout.item_note_preview_padding_horisontal_8dp),
         TextAdapterItem(R.layout.item_time_prediction),
         ShimmerAdapterItem(R.layout.item_events_shimmer),
         ErrorStateAdapterItem {
-            analytics.sendClick("DashboardReload")
             store.accept(DashboardEvent.Ui.Action.SwipeToRefresh)
         },
     )
 
     private fun clickOnClasses(it: Classes) {
-        analytics.sendClick("ClickClasses")
         store.accept(DashboardEvent.Ui.Click.ClassesItem(it))
     }
 

@@ -27,8 +27,6 @@ import kekmech.ru.feature_bars_impl.domain.FinalGradeType
 import kekmech.ru.feature_bars_impl.presentation.items.ControlActivityAdapterItem
 import kekmech.ru.feature_bars_impl.presentation.items.FinalGradeAdapterItem
 import kekmech.ru.lib_adapter.BaseAdapter
-import kekmech.ru.lib_analytics_android.addScrollAnalytics
-import kekmech.ru.lib_analytics_android.ext.screenAnalytics
 import kekmech.ru.coreui.R as coreui_R
 
 private const val BULLET_SEPARATOR = " • "
@@ -36,7 +34,6 @@ private const val ARG_DISCIPLINE_INFO = "Arg.Discipline"
 
 class BarsDetailsFragment : BottomSheetDialogFragment(R.layout.fragment_bars_details) {
 
-    private val analytics by screenAnalytics("BarsDetails")
     private val viewBinding by viewBinding(FragmentBarsDetailsBinding::bind)
     private val adapter by fastLazy { createAdapter() }
 
@@ -45,7 +42,6 @@ class BarsDetailsFragment : BottomSheetDialogFragment(R.layout.fragment_bars_det
         with(viewBinding) {
             recyclerView.addSystemBottomPadding()
             recyclerView.adapter = adapter
-            recyclerView.addScrollAnalytics(analytics, "BarsDetailsRecycler")
         }
         adapter.update(getItems(notNullSerializableArg(ARG_DISCIPLINE_INFO)))
     }

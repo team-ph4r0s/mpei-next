@@ -16,13 +16,10 @@ import kekmech.ru.feature_app_settings_api.data.AppSettingsRepository
 import kekmech.ru.feature_app_settings_api.domain.model.isDarkTheme
 import kekmech.ru.feature_map_impl.launcher.DeeplinkDelegate
 import kekmech.ru.feature_map_impl.launcher.MapLink
-import kekmech.ru.feature_map_shared.MarkerType
-import kekmech.ru.lib_analytics_android.ext.screenAnalytics
 import kekmech.ru.lib_navigation.features.ScrollToTop
 import kekmech.ru.lib_navigation.features.TabScreenStateSaver
 import kekmech.ru.lib_navigation.features.TabScreenStateSaverImpl
 import kekmech.ru.ui_map.MapScreen
-import kekmech.ru.ui_map.MapScreenEvent
 import kekmech.ru.ui_theme.theme.MpeixScreenTheme
 import org.koin.android.ext.android.get
 import org.koin.android.ext.android.inject
@@ -36,7 +33,6 @@ internal class MapFragment :
     ScrollToTop,
     TabScreenStateSaver by TabScreenStateSaverImpl("map") {
 
-    private val analytics by screenAnalytics("Map")
     private val deeplinkDelegate by inject<DeeplinkDelegate>()
     private val appSettings by inject<AppSettingsRepository>()
 
@@ -70,7 +66,6 @@ internal class MapFragment :
                 tileLoader = viewModel.tileLoader,
                 // the status bar is the only inset here: the bottom bar of the app takes the rest
                 insets = WindowInsets.statusBars,
-                onEvent = ::onEvent,
             )
         }
     }
@@ -88,23 +83,5 @@ internal class MapFragment :
 
     override fun onScrollToTop() {
         viewModel.controller.resetView()
-    }
-
-    private fun onEvent(event: MapScreenEvent) {
-        when (event) {
-            is MapScreenEvent.TabSelected -> analytics.sendClick("Tab_${event.tab.analyticsName()}")
-            is MapScreenEvent.PlaceSelected -> analytics.sendClick("ListMarker_(${event.place.name})")
-            is MapScreenEvent.AppearanceChanged -> analytics.sendClick("MapAppearance_${event.appearance}")
-            MapScreenEvent.Reload -> analytics.sendClick("MapReload")
-        }
-    }
-
-    /** The names of the tabs in the analytics are the same as before the map became the common screen. */
-    private fun MarkerType.analyticsName() = when (this) {
-        MarkerType.FOOD -> "FOOD"
-        MarkerType.BUILDING -> "BUILDINGS"
-        MarkerType.HOSTEL -> "HOSTELS"
-        MarkerType.STRUCTURE -> "STRUCTURES"
-        MarkerType.OTHER, MarkerType.UNDEFINED -> "OTHERS"
     }
 }

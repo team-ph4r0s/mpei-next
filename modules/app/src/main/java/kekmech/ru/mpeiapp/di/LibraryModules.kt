@@ -1,6 +1,5 @@
 package kekmech.ru.mpeiapp.di
 
-import kekmech.ru.lib_analytics_android.di.LibraryAnalyticsModule
 import kekmech.ru.lib_app_database.di.LibraryAppDatabaseModule
 import kekmech.ru.lib_coroutines.di.LibraryCoroutinesModule
 import kekmech.ru.lib_feature_toggles.di.LibraryFeatureTogglesModule
@@ -12,7 +11,6 @@ internal val LibraryModules = arrayOf(
     LibraryCoroutinesModule,
     LibraryPersistentCacheModule,
     LibraryAppDatabaseModule,
-    LibraryAnalyticsModule,
     LibraryNetworkModule,
     LibraryFeatureTogglesModule,
     LibraryNavigationModule,

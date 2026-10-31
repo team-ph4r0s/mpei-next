@@ -29,7 +29,6 @@ import kekmech.ru.feature_favorite_schedule_api.domain.model.FavoriteSchedule
 import kekmech.ru.feature_schedule_api.ScheduleFeatureApi.ContinueTo.BACK_WITH_RESULT
 import kekmech.ru.feature_schedule_api.domain.model.SelectedSchedule
 import kekmech.ru.lib_adapter.BaseAdapter
-import kekmech.ru.lib_analytics_android.ext.screenAnalytics
 import kekmech.ru.lib_navigation.AddScreenForward
 import kekmech.ru.lib_navigation.Router
 import kekmech.ru.lib_navigation.addScreenForward
@@ -43,7 +42,6 @@ internal class FavoritesFragment :
     ElmRendererDelegate<FavoritesEffect, FavoritesState> {
 
     private val dependencies by inject<AppSettingDependencies>()
-    private val analytics by screenAnalytics("Favorites")
     private val adapter by fastLazy { createAdapter() }
     private val viewBinding by viewBinding(FragmentFavoritesBinding::bind)
     private val router by inject<Router>()
@@ -61,7 +59,6 @@ internal class FavoritesFragment :
             recyclerView.layoutManager = LinearLayoutManager(requireContext())
             recyclerView.adapter = adapter
             recyclerView.attachSwipeToDeleteCallback(isItemForDelete = { it is FavoriteScheduleItem }) {
-                analytics.sendClick("DeleteFavorite")
                 store.accept(Ui.Click.DeleteFavorite((it as FavoriteScheduleItem).value))
             }
         }
@@ -80,7 +77,6 @@ internal class FavoritesFragment :
         BaseAdapter(
             SpaceAdapterItem(),
             AddActionAdapterItem {
-                analytics.sendClick("AddFavorite")
                 setResultListener<SelectedSchedule>(
                     key = FIND_GROUP_RESULT_KEY,
                     resultMapper = Bundle::notNullSerializable,
@@ -107,7 +103,6 @@ internal class FavoritesFragment :
                 })
             },
             FavoriteScheduleAdapterItem {
-                analytics.sendClick("EditFavorite")
                 setResultListenerForUpdateFavorite(EDIT_FAVORITE_RESULT_KEY)
                 addScreenForward {
                     EditFavoriteFragment.newInstance(

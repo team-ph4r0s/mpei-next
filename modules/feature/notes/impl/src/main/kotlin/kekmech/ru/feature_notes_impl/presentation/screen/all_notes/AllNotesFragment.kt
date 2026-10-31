@@ -30,8 +30,6 @@ import kekmech.ru.feature_notes_impl.presentation.screen.all_notes.elm.AllNotesE
 import kekmech.ru.feature_notes_impl.presentation.screen.all_notes.elm.AllNotesState
 import kekmech.ru.feature_notes_impl.presentation.screen.edit.NoteEditFragment
 import kekmech.ru.lib_adapter.BaseAdapter
-import kekmech.ru.lib_analytics_android.addScrollAnalytics
-import kekmech.ru.lib_analytics_android.ext.screenAnalytics
 import kekmech.ru.lib_navigation.addScreenForward
 import money.vivid.elmslie.android.renderer.ElmRendererDelegate
 import money.vivid.elmslie.android.renderer.androidElmStore
@@ -42,7 +40,6 @@ internal class AllNotesFragment :
     ElmRendererDelegate<AllNotesEffect, AllNotesState> {
 
     private val dependencies: NotesDependencies by inject()
-    private val analytics by screenAnalytics("AllNotes")
     private val adapter by fastLazy { createAdapter() }
     private val viewBinding by viewBinding(FragmentAllNotesBinding::bind)
 
@@ -54,16 +51,13 @@ internal class AllNotesFragment :
         viewBinding.apply {
             toolbar.setNavigationOnClickListener { close() }
             toolbar.setOnMenuItemClickListener {
-                analytics.sendClick("SearchNotes")
                 searchNotes()
                 true
             }
             recyclerView.layoutManager = LinearLayoutManager(requireContext())
             recyclerView.adapter = adapter
             recyclerView.attachScrollListenerForAppBarLayoutShadow(appBarLayout)
-            recyclerView.addScrollAnalytics(analytics, "RecyclerView")
             recyclerView.attachSwipeToDeleteCallback(isItemForDelete = { it is Note }) { note ->
-                analytics.sendClick("DeleteNote")
                 store.accept(Ui.Action.DeleteNote(note as Note))
             }
         }
@@ -94,7 +88,6 @@ internal class AllNotesFragment :
     private fun createAdapter() = BaseAdapter(
         SpaceAdapterItem(),
         NoteAdapterItem(requireContext()) {
-            analytics.sendClick("EditNote")
             navigateToNoteEdit(it)
         },
         SectionHeaderAdapterItem(),

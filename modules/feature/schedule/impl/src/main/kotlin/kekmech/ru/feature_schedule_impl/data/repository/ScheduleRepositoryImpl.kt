@@ -11,7 +11,6 @@ import kekmech.ru.feature_schedule_impl.data.mapper.ScheduleMapper
 import kekmech.ru.feature_schedule_impl.data.network.ScheduleService
 import kekmech.ru.feature_schedule_impl.notifications.reminders.ClassReminderController
 import kekmech.ru.feature_schedule_impl.presentation.widget.ScheduleGlanceWidgetUpdater
-import kekmech.ru.lib_analytics_api.SelectedScheduleAnalyticsProvider
 
 internal class ScheduleRepositoryImpl(
     private val scheduleService: ScheduleService,
@@ -21,7 +20,6 @@ internal class ScheduleRepositoryImpl(
     private val classReminderController: ClassReminderController? = null,
 ) :
     ScheduleRepository,
-    SelectedScheduleAnalyticsProvider,
     PreheatSelectedScheduleProvider {
 
     private var _selectedSchedule: SelectedSchedule by selectedScheduleSource
@@ -63,9 +61,6 @@ internal class ScheduleRepositoryImpl(
     }
 
     override fun getSelectedSchedule(): SelectedSchedule = this._selectedSchedule
-
-    override fun getSelectedScheduleNameForAnalytics(): String? =
-        runCatching { _selectedSchedule }.getOrNull()?.name
 
     override fun getSelectedScheduleImmediately(): SelectedSchedule =
         _selectedSchedule

@@ -23,7 +23,6 @@ import kekmech.ru.feature_app_settings_impl.presentation.screens.map_type.Select
 import kekmech.ru.feature_bars_api.BarsLogoutHandle
 import kekmech.ru.feature_schedule_api.ScheduleFeatureApi
 import kekmech.ru.feature_schedule_api.ScheduleNotificationSettings
-import kekmech.ru.lib_analytics_android.ext.screenAnalytics
 import kekmech.ru.lib_elm_compose.ElmContent
 import kekmech.ru.lib_navigation.addScreenForward
 import kekmech.ru.lib_navigation.showDialog
@@ -37,7 +36,6 @@ internal class AppSettingsComposeFragment : ComposeFragment() {
 
     private val logoutHandle by inject<BarsLogoutHandle>()
     private val scheduleFeatureApi by inject<ScheduleFeatureApi>()
-    private val analytics by screenAnalytics("AppSettings")
 
     @Composable
     override fun Screen() {
@@ -61,23 +59,19 @@ internal class AppSettingsComposeFragment : ComposeFragment() {
                         onAccept = onAccept,
                         onBackClick = if (isRootTab) null else ({ close() }),
                         onOpenFavorites = {
-                            analytics.sendClick("Favorites")
                             addScreenForward { FavoritesFragment() }
                         },
                         notificationSettings = notificationSettings,
                         onOpenScheduleNotifications = {
-                            analytics.sendClick("ScheduleNotifications")
                             addScreenForward { scheduleFeatureApi.getNotificationSettingsScreen() }
                         },
                         onOpenGithub = {
-                            analytics.sendClick("GitHub")
                             requireContext().openLinkExternal("https://github.com/ghostoftheeleven/mpei-next")
                         },
                         onOpenContributor = { url ->
                             requireContext().openLinkExternal(url)
                         },
                         onLogoutBars = {
-                            analytics.sendClick("BarsLogout")
                             if (logoutHandle.logout()) {
                                 Toast
                                     .makeText(requireContext(), "Вы вышли из БАРС", Toast.LENGTH_SHORT)

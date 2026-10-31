@@ -120,7 +120,6 @@ dependencies {
     implementation(project(":ext_kotlin"))
     implementation(project(":ext_shared_preferences"))
 
-    implementation(project(":lib_analytics_android"))
     implementation(project(":lib_app_database"))
     implementation(project(":lib_app_info"))
     implementation(project(":lib_app_lifecycle"))

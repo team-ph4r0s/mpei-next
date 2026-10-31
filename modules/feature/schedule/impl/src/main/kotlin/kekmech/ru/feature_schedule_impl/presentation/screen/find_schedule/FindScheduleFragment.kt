@@ -31,7 +31,6 @@ import kekmech.ru.feature_schedule_impl.presentation.screen.find_schedule.elm.Fi
 import kekmech.ru.feature_schedule_impl.presentation.screen.find_schedule.elm.FindScheduleState
 import kekmech.ru.feature_schedule_impl.presentation.screen.find_schedule.elm.FindScheduleStoreFactory
 import kekmech.ru.feature_schedule_impl.presentation.screen.find_schedule.utils.GroupFormatTextWatcher
-import kekmech.ru.lib_analytics_android.ext.screenAnalytics
 import money.vivid.elmslie.android.renderer.ElmRendererDelegate
 import money.vivid.elmslie.android.renderer.androidElmStore
 import org.koin.android.ext.android.inject
@@ -42,7 +41,6 @@ internal class FindScheduleFragment :
     ElmRendererDelegate<FindScheduleEffect, FindScheduleState> {
 
     private val dependencies by inject<ScheduleDependencies>()
-    private val analytics by screenAnalytics("FindSchedule")
     private val viewBinding by viewBinding(FragmentFindScheduleBinding::bind)
     private val resultKey by fastLazy { notNullStringArg(ARG_RESULT_KEY) }
 
@@ -67,7 +65,6 @@ internal class FindScheduleFragment :
             }
             groupText.addTextChangedListener(GroupFormatTextWatcher(groupText))
             buttonContinue.setOnClickListener {
-                analytics.sendClick("FindContinue")
                 store.accept(Ui.Click.Continue(groupText.text?.toString().orEmpty()))
             }
         }
@@ -108,7 +105,6 @@ internal class FindScheduleFragment :
                     val chip = inflater.inflate(R.layout.item_search_result, this, false) as Chip
                     chip.text = result.name
                     chip.setOnClickListener {
-                        analytics.sendClick("ClickAutocomplete")
                         viewBinding.groupText.setText(result.name)
                         viewBinding.groupText.setSelection(result.name.length)
                     }

@@ -32,8 +32,6 @@ import kekmech.ru.feature_schedule_impl.presentation.screen.main.item.DAY_OF_WEE
 import kekmech.ru.feature_schedule_impl.presentation.screen.main.item.WeekAdapterItem
 import kekmech.ru.feature_schedule_impl.presentation.screen.main.item.WorkingDayAdapterItem
 import kekmech.ru.lib_adapter.BaseAdapter
-import kekmech.ru.lib_analytics_android.addScrollAnalytics
-import kekmech.ru.lib_analytics_android.ext.screenAnalytics
 import kekmech.ru.lib_navigation.features.TabScreenStateSaver
 import kekmech.ru.lib_navigation.features.TabScreenStateSaverImpl
 import money.vivid.elmslie.android.renderer.ElmRendererDelegate
@@ -53,7 +51,6 @@ internal class ScheduleFragment :
     private val viewPagerAdapter by fastLazy { createViewPagerAdapter() }
     private val weeksScrollAdapter by fastLazy { createWeekScrollAdapter() }
     private val weeksScrollHelper by fastLazy { createWeekDaysHelper() }
-    private val analytics by screenAnalytics("Schedule")
     private val viewBinding by viewBinding(FragmentScheduleBinding::bind)
 
     // for viewPager sliding debounce
@@ -71,12 +68,10 @@ internal class ScheduleFragment :
             recyclerView.adapter = weeksScrollAdapter
             recyclerView.itemAnimator = null
             recyclerView.setHasFixedSize(true)
-            recyclerView.addScrollAnalytics(analytics, "WeeksRecyclerView")
 
             viewPager.adapter = viewPagerAdapter
             viewPager.setCurrentItem(getSavedViewPagerCurrentItem(), false)
             viewPager.onPageSelected { store.accept(Ui.Action.PageChanged(it)) }
-            viewPager.addScrollAnalytics(analytics, "WorkingDaysViewPager")
 
             appBarLayout.outlineProvider = null
             appBarLayout.addSystemTopPadding()
@@ -219,7 +214,6 @@ internal class ScheduleFragment :
     )
 
     private fun onClassesClick(classes: Classes) {
-        analytics.sendClick("ClickClasses")
         store.accept(Ui.Click.Classes(classes))
     }
 
@@ -228,13 +222,11 @@ internal class ScheduleFragment :
     }
 
     private fun onReloadClick() {
-        analytics.sendClick("ClassesReload")
         store.accept(Ui.Click.Reload)
     }
 
     private fun createWeekDaysHelper() = WeeksScrollHelper(
         onWeekSelectListener = {
-            analytics.sendClick("Week_$it")
             store.accept(Ui.Action.SelectWeek(it))
         }
     )
@@ -242,7 +234,6 @@ internal class ScheduleFragment :
     private fun createWeekScrollAdapter() = WeeksScrollAdapter(
         WeekAdapterItem(
             onDayClickListener = {
-                analytics.sendClick("Day_${it.date}")
                 store.accept(Ui.Click.Day(it.date))
             }
         )
