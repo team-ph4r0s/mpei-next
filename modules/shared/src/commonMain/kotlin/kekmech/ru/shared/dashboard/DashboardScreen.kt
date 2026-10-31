@@ -1,5 +1,6 @@
 package kekmech.ru.shared.dashboard
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -60,22 +61,28 @@ public fun DashboardScreen(
                 Text(current.message, color = MaterialTheme.colorScheme.error)
                 Button(onClick = controller::refresh) { Text("Повторить") }
             }
-            is DashboardUiState.Content -> ContentView(current, noteList)
+            is DashboardUiState.Content -> ContentView(current, noteList, onChooseSchedule)
         }
     }
 }
 
 @Composable
-private fun ContentView(state: DashboardUiState.Content, notes: List<Note>) {
-    Text(state.selected.name, style = MaterialTheme.typography.titleLarge)
+private fun ContentView(state: DashboardUiState.Content, notes: List<Note>, onChangeSchedule: () -> Unit) {
+    Text(dayTitle(state.today), style = MaterialTheme.typography.headlineMedium)
     Text(
         when (val week = state.weekOfSemester) {
-            is WeekOfSemester.Studying -> "${dayTitle(state.today)} · идёт ${week.num}-я учебная неделя"
-            WeekOfSemester.NonStudying -> "${dayTitle(state.today)} · каникулы или сессия"
-            null -> dayTitle(state.today)
+            is WeekOfSemester.Studying -> "Идёт ${week.num}-я учебная неделя"
+            WeekOfSemester.NonStudying -> "Каникулы или сессия"
+            null -> ""
         },
-        style = MaterialTheme.typography.bodyMedium,
+        style = MaterialTheme.typography.bodyLarge,
+        color = MaterialTheme.colorScheme.primary,
     )
+    // a tap on the group opens the search of the schedule, as on Android
+    Column(Modifier.fillMaxWidth().clickable(onClick = onChangeSchedule).padding(vertical = 4.dp)) {
+        Text(state.selected.name, style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.primary)
+        Text("Нажмите, чтобы сменить", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+    }
     if (state.offline) {
         Text(
             "Нет сети, показана сохранённая копия",
