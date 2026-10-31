@@ -1,4 +1,4 @@
-@file:OptIn(ExperimentalTime::class)
+@file:OptIn(ExperimentalTime::class, ExperimentalComposeUiApi::class)
 
 package kekmech.ru.shared
 
@@ -23,7 +23,9 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.backhandler.BackHandler
 import kekmech.ru.feature_bars_shared.BarsController
 import kekmech.ru.feature_map_shared.MapController
 import kekmech.ru.feature_notes_shared.NotesController
@@ -107,6 +109,12 @@ public fun App(dependencies: AppDependencies) {
                 if (selected == null) reminders.sync(null) else dependencies.backgroundSync.run()
             }
             LaunchedEffect(schedule) { schedule.start() }
+            // the system back: the swipe from the edge of the screen on iOS. The settings close, the search of the schedule is left,
+            // any other section goes back to the home screen
+            val searchCanCancel = (scheduleState as? ScheduleUiState.Search)?.canCancel == true
+            BackHandler(enabled = showSettings) { showSettings = false }
+            BackHandler(enabled = !showSettings && tab == TAB_SCHEDULE && searchCanCancel) { schedule.cancelSearch() }
+            BackHandler(enabled = !showSettings && tab != TAB_HOME && !(tab == TAB_SCHEDULE && searchCanCancel)) { tab = TAB_HOME }
             LaunchedEffect(barsController) { barsController.start() }
 
             if (showSettings) {

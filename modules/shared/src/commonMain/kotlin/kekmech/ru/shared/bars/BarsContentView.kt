@@ -9,10 +9,11 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Button
-import androidx.compose.material3.Card
+import androidx.compose.material3.Surface
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.LinearProgressIndicator
@@ -27,6 +28,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import kekmech.ru.feature_bars_shared.BarsTab
 import kekmech.ru.feature_bars_shared.BarsUiState
@@ -38,6 +40,7 @@ import kekmech.ru.feature_bars_shared.summaryActivities
 import kekmech.ru.lib_bars_parser.BarsDiscipline
 import kekmech.ru.lib_bars_parser.BarsRating
 import kekmech.ru.lib_bars_parser.BarsSummaryRow
+import kekmech.ru.ui_kit_segmented.SegmentedControl
 
 @Composable
 internal fun ContentView(
@@ -53,7 +56,7 @@ internal fun ContentView(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Column(Modifier.weight(1f)) {
-                Text(state.studentName ?: "БАРС", style = MaterialTheme.typography.titleLarge)
+                Text(state.studentName ?: "БАРС", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
                 state.group?.let { Text(it, style = MaterialTheme.typography.bodyMedium) }
             }
             TextButton(onClick = onSignOut) { Text("Выйти") }
@@ -68,13 +71,13 @@ internal fun ContentView(
             TextButton(onClick = onRefresh, enabled = !state.loading) { Text("Обновить") }
         }
 
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            TabButton("Оценки", state.tab == BarsTab.MARKS, Modifier.weight(1f)) { onTab(BarsTab.MARKS) }
-            TabButton("Сводка", state.tab == BarsTab.SUMMARY, Modifier.weight(1f)) { onTab(BarsTab.SUMMARY) }
-        }
+        SegmentedControl(
+            options = BarsTab.entries,
+            selected = state.tab,
+            onSelect = onTab,
+            label = { tab -> if (tab == BarsTab.MARKS) "Оценки" else "Сводка" },
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+        )
 
         if (state.loading) LinearProgressIndicator(Modifier.fillMaxWidth())
         state.error?.let { Box(Modifier.padding(horizontal = 16.dp)) { ErrorText(it) } }
@@ -86,13 +89,10 @@ internal fun ContentView(
     }
 }
 
+/** A card of the BARS lists: the same look as the cards of the classes. */
 @Composable
-private fun TabButton(title: String, selected: Boolean, modifier: Modifier, onClick: () -> Unit) {
-    if (selected) {
-        Button(onClick = onClick, modifier = modifier) { Text(title) }
-    } else {
-        OutlinedButton(onClick = onClick, modifier = modifier) { Text(title) }
-    }
+private fun BarsCard(modifier: Modifier, content: @Composable () -> Unit) {
+    Surface(modifier, shape = RoundedCornerShape(16.dp), color = MaterialTheme.colorScheme.surfaceVariant, content = content)
 }
 
 @Composable
@@ -133,7 +133,7 @@ private fun MarksList(state: BarsUiState.Content) {
 
 @Composable
 private fun RatingCard(rating: BarsRating) {
-    Card(Modifier.fillMaxWidth()) {
+    BarsCard(Modifier.fillMaxWidth()) {
         Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
             Text("Рейтинг", style = MaterialTheme.typography.titleMedium)
             rating.items.forEach { Text("${it.label}: ${it.raw}", style = MaterialTheme.typography.bodyMedium) }
@@ -144,7 +144,7 @@ private fun RatingCard(rating: BarsRating) {
 @Composable
 private fun DisciplineCard(discipline: BarsDiscipline) {
     var expanded by remember { mutableStateOf(false) }
-    Card(Modifier.fillMaxWidth().clickable { expanded = !expanded }) {
+    BarsCard(Modifier.fillMaxWidth().clickable { expanded = !expanded }) {
         Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
             Text(discipline.name, style = MaterialTheme.typography.titleMedium)
             Text(
@@ -204,7 +204,7 @@ private fun SummaryList(state: BarsUiState.Content) {
 
 @Composable
 private fun SummaryCard(row: BarsSummaryRow, currentWeek: Int?) {
-    Card(Modifier.fillMaxWidth()) {
+    BarsCard(Modifier.fillMaxWidth()) {
         Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
             Text(row.discipline, style = MaterialTheme.typography.titleMedium)
             row.assessmentType?.let { Text(it, style = MaterialTheme.typography.bodySmall) }
