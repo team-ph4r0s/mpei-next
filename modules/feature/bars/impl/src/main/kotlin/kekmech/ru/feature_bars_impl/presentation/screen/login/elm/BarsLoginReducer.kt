@@ -128,12 +128,11 @@ internal class BarsLoginReducer :
                 accountSelectionState {
                     copy(
                         accounts = event.accounts.map { it.toUi() },
-                        selectedAccountId = event.accounts.find {
-                            it.status.contains(
-                                "обучается",
-                                ignoreCase = true
-                            )
-                        }?.id,
+                        // The portal does not tell the status of a student, so without it the first one is chosen
+                        selectedAccountId = (
+                            event.accounts.find { it.status.contains("обучается", ignoreCase = true) }
+                                ?: event.accounts.firstOrNull()
+                            )?.id,
                         isLoading = false,
                         failure = null,
                     )

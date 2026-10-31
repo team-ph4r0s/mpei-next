@@ -1,6 +1,6 @@
 package kekmech.ru.feature_dashboard_impl.presentation.screen.main.elm
 
-import kekmech.ru.ext_okhttp.NoInternetConnectionException
+import kekmech.ru.lib_network.NoInternetConnectionException
 import kekmech.ru.feature_dashboard_impl.domain.interactor.GetUpcomingEventsInteractor
 import kekmech.ru.feature_dashboard_impl.presentation.screen.main.elm.DashboardEvent.Internal
 import kekmech.ru.feature_favorite_schedule_api.data.repository.FavoriteScheduleRepository
@@ -11,7 +11,7 @@ import kekmech.ru.lib_elm.actorFlow
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import money.vivid.elmslie.core.store.Actor
-import retrofit2.HttpException
+import io.ktor.client.plugins.ResponseException
 import java.net.SocketException
 import java.net.SocketTimeoutException
 import javax.net.ssl.SSLHandshakeException
@@ -49,7 +49,7 @@ internal class DashboardActor(
                 when (e) {
                     is SocketException,
                     is SocketTimeoutException,
-                    is HttpException,
+                    is ResponseException,
                     is NoInternetConnectionException -> Unit
                     // unexpected error types
                     else -> android.util.Log.e("DashboardActor", "Unexpected error while loading the upcoming events", e)

@@ -15,9 +15,13 @@ import kekmech.ru.feature_schedule_impl.presentation.screen.find_schedule.elm.Fi
 import kekmech.ru.feature_schedule_impl.presentation.screen.find_schedule.elm.FindScheduleEvent.Ui
 import kekmech.ru.feature_schedule_impl.presentation.screen.find_schedule.elm.FindScheduleReducer
 import kekmech.ru.feature_schedule_impl.presentation.screen.find_schedule.elm.FindScheduleState
-import okhttp3.ResponseBody.Companion.toResponseBody
-import retrofit2.HttpException
-import retrofit2.Response
+import io.ktor.client.HttpClient
+import io.ktor.client.engine.mock.MockEngine
+import io.ktor.client.engine.mock.respond
+import io.ktor.client.plugins.ResponseException
+import io.ktor.client.request.get
+import io.ktor.http.HttpStatusCode
+import kotlinx.coroutines.runBlocking
 
 class FindScheduleReducerTest : BehaviorSpec({
     val reducer = FindScheduleReducer()
@@ -164,7 +168,10 @@ class FindScheduleReducerTest : BehaviorSpec({
         private const val CORRECT_NAME = "С-06-18"
         private const val INVALID_NAME = "С-vv--"
         private val VALIDATION_ERROR =
-            HttpException(Response.error<Unit>(400, "".toResponseBody()))
+            runBlocking {
+                val client = HttpClient(MockEngine { respond("", HttpStatusCode.BadRequest) }) { expectSuccess = true }
+                runCatching { client.get("http://localhost/") }.exceptionOrNull() as ResponseException
+            }
         private val UNKNOWN_ERROR = IllegalStateException("Unknown error!")
     }
 }

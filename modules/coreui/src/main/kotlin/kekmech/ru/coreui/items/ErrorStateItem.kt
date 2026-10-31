@@ -6,10 +6,10 @@ import androidx.annotation.StringRes
 import androidx.recyclerview.widget.RecyclerView
 import kekmech.ru.coreui.R
 import kekmech.ru.coreui.databinding.ItemErrorStateBinding
-import kekmech.ru.ext_okhttp.NoInternetConnectionException
+import kekmech.ru.lib_network.NoInternetConnectionException
 import kekmech.ru.lib_adapter.AdapterItem
 import kekmech.ru.lib_adapter.BaseItemBinder
-import retrofit2.HttpException
+import io.ktor.client.plugins.ResponseException
 import java.net.UnknownHostException
 import javax.net.ssl.SSLHandshakeException
 import kekmech.ru.res_images.R.drawable as Images
@@ -75,14 +75,13 @@ private class ErrorStateItemBinder(
                     second = Strings.common_error_no_internet_description to null,
                     third = Images.ill_no_internet_error,
                 )
-            is HttpException ->
+            is ResponseException ->
                 Triple(
                     first = Strings.common_error_bad_response_title,
-                    second = Strings.common_error_bad_response_description to throwable.code()
-                        .toString(),
+                    second = Strings.common_error_bad_response_description to throwable.response.status.value.toString(),
                     third = Images.ill_bad_response_error,
                 )
-                    .takeIf { throwable.code() in 300 until 600 }
+                    .takeIf { throwable.response.status.value in 300 until 600 }
                     ?: getErrorStateContent(null)
             is SSLHandshakeException ->
                 Triple(

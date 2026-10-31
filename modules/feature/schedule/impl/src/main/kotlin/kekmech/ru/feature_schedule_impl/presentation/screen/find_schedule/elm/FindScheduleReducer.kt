@@ -4,7 +4,7 @@ import kekmech.ru.feature_schedule_api.domain.model.SelectedSchedule
 import kekmech.ru.feature_schedule_impl.presentation.screen.find_schedule.elm.FindScheduleEvent.Internal
 import kekmech.ru.feature_schedule_impl.presentation.screen.find_schedule.elm.FindScheduleEvent.Ui
 import money.vivid.elmslie.core.store.ScreenReducer
-import retrofit2.HttpException
+import io.ktor.client.plugins.ResponseException
 import kekmech.ru.feature_schedule_impl.presentation.screen.find_schedule.elm.FindScheduleCommand as Command
 import kekmech.ru.feature_schedule_impl.presentation.screen.find_schedule.elm.FindScheduleEffect as Effect
 import kekmech.ru.feature_schedule_impl.presentation.screen.find_schedule.elm.FindScheduleEvent as Event
@@ -77,7 +77,7 @@ internal class FindScheduleReducer :
 
 
     private fun calculateErrorEffect(throwable: Throwable): Effect {
-        return if (throwable is HttpException && throwable.code() == HTTP_BAD_REQUEST_CODE) {
+        return if (throwable is ResponseException && throwable.response.status.value == HTTP_BAD_REQUEST_CODE) {
             Effect.ShowError
         } else {
             Effect.ShowSomethingWentWrongError

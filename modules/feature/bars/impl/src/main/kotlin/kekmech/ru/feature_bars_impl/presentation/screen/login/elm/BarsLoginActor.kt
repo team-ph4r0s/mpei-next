@@ -1,16 +1,6 @@
 package kekmech.ru.feature_bars_impl.presentation.screen.login.elm
 
-import com.kekmech.lib_bars.BarsHandle
-import com.kekmech.lib_bars.auth.GetStudentListResult
-import com.kekmech.lib_bars.auth.InitResult
-import com.kekmech.lib_bars.auth.LoginData
-import com.kekmech.lib_bars.auth.LoginResult
-import com.kekmech.lib_bars.auth.RequestTwoFactorResult
-import com.kekmech.lib_bars.auth.StudentEntry
-import com.kekmech.lib_bars.auth.SubmitTwoFactorResult
-import com.kekmech.lib_bars.auth.TwoFactorData
-import com.kekmech.lib_bars.auth.TwoFactorProvider
-import kekmech.ru.feature_bars_impl.data.network.BarsTwoFactorSessionHolder
+import kekmech.ru.feature_bars_impl.data.mapper.BarsDisciplineMapper
 import kekmech.ru.feature_bars_impl.data.repository.BarsRepository
 import kekmech.ru.feature_bars_impl.domain.ExceptionWithId
 import kekmech.ru.feature_bars_impl.presentation.screen.login.elm.BarsLoginEvent.Internal.CheckAuthStatusFailure
@@ -24,88 +14,75 @@ import kekmech.ru.feature_bars_impl.presentation.screen.login.elm.BarsLoginEvent
 import kekmech.ru.feature_bars_impl.presentation.screen.login.elm.BarsLoginEvent.Internal.Submit2faCodeFailure
 import kekmech.ru.feature_bars_impl.presentation.screen.login.elm.BarsLoginEvent.Internal.Submit2faCodeSuccess
 import kekmech.ru.feature_bars_impl.presentation.screen.login.elm.BarsLoginEvent.Internal.SubscribeTwoFactorCodeTimerSuccess
+import kekmech.ru.lib_bars_client.BarsLoginResult
+import kekmech.ru.lib_bars_parser.BarsStudentLink
+import kekmech.ru.lib_bars_parser.BarsTwoFactorKind
+import kekmech.ru.lib_bars_parser.BarsTwoFactorPage
+import kekmech.ru.lib_bars_parser.BarsTwoFactorProvider
 import kekmech.ru.lib_elm.actorFlow
 import kekmech.ru.lib_navigation.PopBackStack
 import kekmech.ru.lib_navigation.Router
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.withContext
-import kotlinx.coroutines.withTimeoutOrNull
 import money.vivid.elmslie.core.store.Actor
+import timber.log.Timber
 import kekmech.ru.feature_bars_impl.presentation.screen.login.elm.BarsLoginCommand as Command
 import kekmech.ru.feature_bars_impl.presentation.screen.login.elm.BarsLoginEvent as Event
 
 private const val TWO_FACTOR_DEBOUNCE_SEC = 30
 
-/**
- * bars.mpei.ru is unstable and sometimes accepts a TCP connection but never responds.
- * lib_bars has no call timeout of its own, so without this guard the login screen
- * would show an endless loading state.
- */
-private const val BARS_REQUEST_TIMEOUT_MS = 30_000L
-
 internal class BarsLoginActor(
-    private val barsHandle: BarsHandle,
     private val router: Router,
     private val barsRepository: BarsRepository,
 ) : Actor<Command, Event>() {
-    private var activeRequestCodeDeferred: kotlinx.coroutines.CompletableDeferred<Unit>? = null
+
+    private val api get() = barsRepository.api
+
+    private var activeRequestCodeDeferred: CompletableDeferred<Unit>? = null
 
     override fun execute(command: Command): Flow<Event> =
         when (command) {
             is Command.CheckAuthStatus -> actorFlow {
-                timber.log.Timber.d("BarsLoginActor: Starting auth.init()")
-                val initResult = withTimeoutOrNull(BARS_REQUEST_TIMEOUT_MS) {
-                    barsHandle.auth.init()
-                } ?: error("BARS request timeout: auth.init")
-                timber.log.Timber.d("BarsLoginActor: Init result: ${initResult.javaClass.simpleName}")
-                when (initResult) {
-                    is InitResult.LoginRequired -> AuthStatus.LoginRequired
-                    is InitResult.AccountSelectionRequired -> AuthStatus.AccountSelectionRequired
-                    is InitResult.AlreadyLoggedIn -> AuthStatus.LoggedIn
+                // The saved session is brought back; whether BARS still keeps it is known by the first page
+                if (api.restoreSession() && barsRepository.getCurrentAccount() != null) {
+                    AuthStatus.LoggedIn
+                } else {
+                    AuthStatus.LoginRequired
                 }
             }.mapEvents(
                 eventMapper = ::CheckAuthStatusSuccess,
                 errorMapper = { e ->
                     val e = ExceptionWithId(e)
-                    timber.log.Timber.e(e.source, "BARS login auth.init failed, id=${e.uuid}")
+                    Timber.e(e.source, "BARS login restoreSession failed, id=${e.uuid}")
                     CheckAuthStatusFailure(e)
                 },
             )
 
             is Command.LoginWithPassword -> actorFlow {
-                timber.log.Timber.d("BarsLoginActor: Starting login with username=${command.login}")
-                BarsTwoFactorSessionHolder.reset()
-                val loginResult = withTimeoutOrNull(BARS_REQUEST_TIMEOUT_MS) {
-                    timber.log.Timber.d("BarsLoginActor: Calling barsHandle.auth.login()")
-                    barsHandle.auth.login(
-                        data = LoginData(
-                            username = command.login,
-                            password = command.password,
-                            remember = false,
-                        )
-                    )
-                } ?: error("BARS request timeout: auth.login")
-                timber.log.Timber.d("BarsLoginActor: Login result: ${loginResult.javaClass.simpleName}")
-                when (loginResult) {
-                    is LoginResult.WrongCredentials -> LoginStatus.WrongCredentials
-                    is LoginResult.Success -> LoginStatus.AccountSelectionRequired
-                    is LoginResult.TwoFactorRequired -> {
-                        val session = kekmech.ru.feature_bars_impl.data.network.BarsTwoFactorSessionHolder.currentSession
-                        val defaultProvider = session?.defaultProvider ?: loginResult.defaultProvider.toDomain()
-                        val providers = (
-                            session?.availableProviders
-                                ?: (loginResult.availableProviders.map { it.toDomain() } + listOf(defaultProvider))
-                            )
-                            .distinct()
-                            .sortedByDescending { it == defaultProvider }
-
+                barsRepository.twoFactorPage = null
+                // The code is requested by the next command, once the screen of the code is shown
+                val result = api.login(
+                    login = command.login,
+                    password = command.password,
+                    rememberMe = false,
+                    sendCode = false,
+                )
+                when (result) {
+                    is BarsLoginResult.Rejected -> LoginStatus.WrongCredentials
+                    is BarsLoginResult.LoggedIn -> {
+                        barsRepository.students = result.students
+                        LoginStatus.AccountSelectionRequired
+                    }
+                    is BarsLoginResult.TwoFactorRequired -> {
+                        barsRepository.twoFactorPage = result.page
                         LoginStatus.TwoFactorRequired(
-                            defaultProvider = defaultProvider,
-                            providers = providers,
-                            serverMessage = session?.lastServerMessage,
+                            defaultProvider = result.page.default.kind.toDomain(),
+                            providers = result.page.providers.map { it.kind.toDomain() }.distinct(),
+                            serverMessage = null,
                         )
                     }
                 }
@@ -113,28 +90,20 @@ internal class BarsLoginActor(
                 eventMapper = ::LoginWithPasswordSuccess,
                 errorMapper = { e ->
                     val e = ExceptionWithId(e)
-                    timber.log.Timber.e(e.source, "BARS login auth.login failed, id=${e.uuid}")
+                    Timber.e(e.source, "BARS login failed, id=${e.uuid}")
                     LoginWithPasswordFailure(e)
                 },
             )
 
             is Command.RequestTwoFactorCode -> actorFlow {
-                val deferred = kotlinx.coroutines.CompletableDeferred<Unit>()
+                val deferred = CompletableDeferred<Unit>()
                 activeRequestCodeDeferred = deferred
-                BarsTwoFactorSessionHolder.setActiveProvider(command.provider)
                 try {
-                    val requestResult = withTimeoutOrNull(BARS_REQUEST_TIMEOUT_MS) {
-                        barsHandle.auth.requestTwoFactorCode(command.provider.toLib())
-                    } ?: error("BARS request timeout: auth.requestTwoFactorCode")
-                    when (requestResult) {
-                        RequestTwoFactorResult.Error -> error("Unable to send code")
-                        RequestTwoFactorResult.Success -> Unit
-                    }
-                    if (command.provider == CodeProvider.TOTP) {
-                        BarsTwoFactorSessionHolder.markTotpInitialized()
-                    }
+                    val page = requireNotNull(barsRepository.twoFactorPage) { "The sign-in is not waiting for a code" }
+                    val result = api.sendCode(page.providerFor(command.provider))
+                    if (result.success == false || result.error != null) error("Unable to send code")
                     deferred.complete(Unit)
-                    BarsTwoFactorSessionHolder.currentSession?.lastServerMessage
+                    result.message
                 } catch (e: Throwable) {
                     deferred.completeExceptionally(e)
                     throw e
@@ -149,7 +118,7 @@ internal class BarsLoginActor(
                 },
                 errorMapper = { e ->
                     val e = ExceptionWithId(e)
-                    timber.log.Timber.e(e.source, "BARS 2fa auth.requestTwoFactorCode failed, id=${e.uuid}")
+                    Timber.e(e.source, "BARS 2fa sendCode failed, id=${e.uuid}")
                     RequestTwoFactorCodeFailure(e)
                 },
             )
@@ -163,95 +132,105 @@ internal class BarsLoginActor(
 
             is Command.Submit2faCode -> actorFlow {
                 runCatching { activeRequestCodeDeferred?.await() }
-                // For TOTP, code is generated locally in Authenticator, no requestTwoFactorCode is needed.
-                val result = withTimeoutOrNull(BARS_REQUEST_TIMEOUT_MS) {
-                    barsHandle.auth.submitTwoFactorCode(
-                        data = TwoFactorData(
-                            username = command.login,
-                            code = command.code,
-                            remember = false,
-                        ),
-                    )
-                } ?: error("BARS request timeout: auth.submitTwoFactorCode")
-                when (result) {
-                    is SubmitTwoFactorResult.AccountSelectionRequired,
-                    is SubmitTwoFactorResult.Success -> TwoFactorCodeStatus.AccountSelectionRequired
-
-                    is SubmitTwoFactorResult.IncorrectCode -> TwoFactorCodeStatus.InvalidCode
-                    is SubmitTwoFactorResult.Error -> error("Error while submitting code")
+                when (val result = api.submitCode(command.code)) {
+                    is BarsLoginResult.LoggedIn -> {
+                        barsRepository.twoFactorPage = null
+                        barsRepository.students = result.students
+                        TwoFactorCodeStatus.AccountSelectionRequired
+                    }
+                    is BarsLoginResult.Rejected ->
+                        if (result.canRetryCode) TwoFactorCodeStatus.InvalidCode else error("The sign-in has ended")
+                    is BarsLoginResult.TwoFactorRequired -> TwoFactorCodeStatus.InvalidCode
                 }
             }.mapEvents(
                 eventMapper = ::Submit2faCodeSuccess,
                 errorMapper = { e ->
                     val e = ExceptionWithId(e)
-                    timber.log.Timber.e(e.source, "BARS 2fa auth.submitTwoFactorCode failed, id=${e.uuid}")
+                    Timber.e(e.source, "BARS 2fa submitCode failed, id=${e.uuid}")
                     Submit2faCodeFailure(e)
                 },
             )
 
             is Command.GetAccounts -> actorFlow {
-                val listResult = withTimeoutOrNull(BARS_REQUEST_TIMEOUT_MS) {
-                    barsHandle.auth.getStudentList()
-                } ?: error("BARS request timeout: auth.getStudentList")
-                val accounts = when (val result = listResult) {
-                    is GetStudentListResult.Success -> result.list.map { it.toDomain() }
-                    is GetStudentListResult.Error -> error("Error while getting accounts")
-                }
+                val accounts = barsRepository.students.map { it.toDomain() }
+                    .ifEmpty { listOf(loadOnlyAccount()) }
                 barsRepository.saveAccounts(accounts)
                 accounts
             }.mapEvents(
                 eventMapper = ::GetAccountsSuccess,
                 errorMapper = { e ->
                     val e = ExceptionWithId(e)
-                    timber.log.Timber.e(e.source, "BARS accounts auth.getStudentList failed, id=${e.uuid}")
+                    Timber.e(e.source, "BARS accounts failed, id=${e.uuid}")
                     GetAccountsFailure(e)
                 },
             )
 
             is Command.SubmitAccountId -> actorFlow {
-                withTimeoutOrNull(BARS_REQUEST_TIMEOUT_MS) {
-                    barsHandle.auth.selectStudentById(command.id)
-                } ?: error("BARS request timeout: auth.selectStudentById")
+                // The first page of the student: it tells the group and checks that the id is the one of this account
+                val page = api.loadMarksPage(command.id)
+                val known = barsRepository.students.firstOrNull { it.id == command.id }
+                barsRepository.saveAccounts(
+                    listOf(
+                        Account(
+                            id = command.id,
+                            name = page.studentName ?: known?.name.orEmpty(),
+                            group = page.studentGroup.orEmpty(),
+                            status = "",
+                        )
+                    )
+                )
                 barsRepository.saveCurrentUserId(command.id)
+                barsRepository.saveDisciplines(BarsDisciplineMapper.map(page.disciplines))
+                barsRepository.students = emptyList()
                 barsRepository.loginStateTrigger.emit(Unit)
-                BarsTwoFactorSessionHolder.reset()
                 withContext(Dispatchers.Main) {
                     router.executeCommand(PopBackStack())
                 }
             }.mapEvents(
-                // infallible in this version on lib_bars
+                errorMapper = { e ->
+                    val e = ExceptionWithId(e)
+                    Timber.e(e.source, "BARS select account failed, id=${e.uuid}")
+                    GetAccountsFailure(e)
+                },
             )
 
             is Command.Exit -> actorFlow {
-                BarsTwoFactorSessionHolder.reset()
+                barsRepository.twoFactorPage = null
                 withContext(Dispatchers.Main) {
                     router.executeCommand(PopBackStack())
                 }
             }.mapEvents()
         }
 
-    private fun TwoFactorProvider.toDomain(): CodeProvider =
+    /** An account with one student goes without the choice: his id is the one the portal gave at the sign-in. */
+    private suspend fun loadOnlyAccount(): Account {
+        val savedId = barsRepository.getCurrentAccount()?.id
+        val page = api.loadMarksPage(savedId)
+        return Account(
+            id = checkNotNull(savedId ?: api.studentId) { "The student is not known" },
+            name = page.studentName.orEmpty(),
+            group = page.studentGroup.orEmpty(),
+            status = "",
+        )
+    }
+
+    private fun BarsTwoFactorPage.providerFor(provider: CodeProvider): BarsTwoFactorProvider =
+        providers.firstOrNull { it.kind.toDomain() == provider } ?: default
+
+    private fun BarsTwoFactorKind.toDomain(): CodeProvider =
         when (this) {
-            TwoFactorProvider.MAX -> CodeProvider.MAX
-            TwoFactorProvider.VK -> CodeProvider.VK
-            TwoFactorProvider.TG -> CodeProvider.TG
+            BarsTwoFactorKind.TOTP -> CodeProvider.TOTP
+            BarsTwoFactorKind.EMAIL -> CodeProvider.EMAIL
+            BarsTwoFactorKind.MAX -> CodeProvider.MAX
+            BarsTwoFactorKind.TELEGRAM -> CodeProvider.TG
+            BarsTwoFactorKind.VK -> CodeProvider.VK
         }
 
-    private fun CodeProvider.toLib(): TwoFactorProvider =
-        when (this) {
-            CodeProvider.MAX -> TwoFactorProvider.MAX
-            CodeProvider.VK -> TwoFactorProvider.VK
-            CodeProvider.TG -> TwoFactorProvider.TG
-            // Map TOTP and EMAIL to TG (slot 1) - BarsTwoFactorCompatInterceptor rewrites tid=1 to tid=5 on the wire
-            CodeProvider.TOTP -> TwoFactorProvider.TG
-            CodeProvider.EMAIL -> TwoFactorProvider.TG
-        }
-
-    private fun StudentEntry.toDomain(): Account =
+    private fun BarsStudentLink.toDomain(): Account =
         Account(
             id = id,
             name = name,
-            group = group,
-            status = status,
+            group = "",
+            status = "",
         )
 }

@@ -32,8 +32,9 @@ class MpeixApp : Application(),
         // the language chosen in the settings must be known before the first activity (and its splash) is created
         AppLocales.applySaved(this)
         initKoin()
-        appLifecycleObservers.forEach { it.onCreate(applicationContext) }
+        // before anything can create the HTTP client: the log of the requests is on outside of the production environment
         ServiceUrlResolver.setAppEnvironment(appEnvironmentRepository.getAppEnvironment())
+        appLifecycleObservers.forEach { it.onCreate(applicationContext) }
         getKoin().get<RepoRemoteConfig>().refresh()
         initTimber()
         MMKV.initialize(this)

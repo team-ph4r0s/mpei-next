@@ -1,15 +1,10 @@
 package kekmech.ru.feature_bars_impl.presentation.screen.main_compose.elm
 
-import com.kekmech.lib_bars.BarsHandle
-import com.kekmech.lib_bars.auth.InitResult
-import com.kekmech.lib_bars.user.Discipline
-import kekmech.ru.ext_kotlin.capitalizeSafe
 import kekmech.ru.feature_app_settings_api.AppSettingsFeatureLauncher
-import kekmech.ru.feature_bars_impl.data.mapper.LibToMarksResponseMapper
+import kekmech.ru.feature_bars_impl.data.mapper.BarsDisciplineMapper
 import kekmech.ru.feature_bars_impl.data.repository.BarsRepository
 import kekmech.ru.feature_schedule_api.data.repository.ScheduleRepository
 import kekmech.ru.feature_schedule_api.domain.model.WeekOfSemester
-import kekmech.ru.feature_bars_impl.domain.AssessedDiscipline
 import kekmech.ru.feature_bars_impl.domain.ExceptionWithId
 import kekmech.ru.feature_bars_impl.presentation.screen.details.BarsDetailsFragment
 import kekmech.ru.feature_bars_impl.presentation.screen.login.BarsLoginFragment
@@ -20,6 +15,7 @@ import kekmech.ru.feature_bars_impl.presentation.screen.main_compose.elm.BarsCom
 import kekmech.ru.feature_bars_impl.presentation.screen.main_compose.elm.BarsComposeEvent.Internal.GetMarksSuccess
 import kekmech.ru.feature_bars_impl.presentation.screen.main_compose.elm.BarsComposeEvent.Internal.GetProfileSuccess
 import kekmech.ru.feature_bars_impl.presentation.screen.main_compose.elm.BarsComposeEvent.Internal.SubscribeAuthStatusSuccess
+import kekmech.ru.lib_bars_client.BarsSessionExpiredException
 import kekmech.ru.lib_elm.actorFlow
 import kekmech.ru.lib_navigation.AddScreenForward
 import kekmech.ru.lib_navigation.Router
@@ -30,20 +26,11 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
-import kotlinx.coroutines.withTimeoutOrNull
 import money.vivid.elmslie.core.store.Actor
 import kekmech.ru.feature_bars_impl.presentation.screen.main_compose.elm.BarsComposeCommand as Command
 import kekmech.ru.feature_bars_impl.presentation.screen.main_compose.elm.BarsComposeEvent as Event
 
-/**
- * bars.mpei.ru is unstable and sometimes accepts a TCP connection but never responds.
- * lib_bars has no call timeout of its own, so without this guard the screen
- * would show an endless loading state.
- */
-private const val BARS_REQUEST_TIMEOUT_MS = 30_000L
-
 internal class BarsComposeActor(
-    private val barsHandle: BarsHandle,
     private val appSettingsFeatureLauncher: AppSettingsFeatureLauncher,
     private val router: Router,
     private val barsRepository: BarsRepository,
@@ -54,13 +41,11 @@ internal class BarsComposeActor(
         when (command) {
             is Command.SubscribeAuthStatus -> barsRepository.loginStateTrigger
                 .map {
-                    val initResult = withTimeoutOrNull(BARS_REQUEST_TIMEOUT_MS) {
-                        barsHandle.auth.init()
-                    } ?: error("BARS request timeout: auth.init")
-                    when (initResult) {
-                        is InitResult.AlreadyLoggedIn -> AuthStatus.LoggedIn
-                        is InitResult.AccountSelectionRequired,
-                        is InitResult.LoginRequired -> AuthStatus.LoginRequired
+                    // The session is checked by the first page that is asked for: BARS answers with the sign-in page if it is dead
+                    if (barsRepository.api.restoreSession() && barsRepository.getCurrentAccount() != null) {
+                        AuthStatus.LoggedIn
+                    } else {
+                        AuthStatus.LoginRequired
                     }
                 }.mapEvents(
                     eventMapper = ::SubscribeAuthStatusSuccess,
@@ -91,12 +76,17 @@ internal class BarsComposeActor(
                     emit(GetMarksSuccess(cached, true))
                 }
 
-                val marks = withTimeoutOrNull(BARS_REQUEST_TIMEOUT_MS) {
-                    barsHandle.user.getMarks()
-                } ?: error("BARS request timeout: user.getMarks")
-                val actual = LibToMarksResponseMapper.map(marks.disciplines)
-                barsRepository.saveDisciplines(actual.payload)
-                emit(GetMarksSuccess(actual.payload, false))
+                val studentId = barsRepository.getCurrentAccount()?.id
+                val page = try {
+                    barsRepository.api.loadMarksPage(studentId)
+                } catch (expired: BarsSessionExpiredException) {
+                    // BARS has closed the session: back to the sign-in prompt
+                    barsRepository.onSessionExpired()
+                    return@flow
+                }
+                val actual = BarsDisciplineMapper.map(page.disciplines)
+                barsRepository.saveDisciplines(actual)
+                emit(GetMarksSuccess(actual, false))
             }.mapEvents(
                 eventMapper = { it },
                 errorMapper = { e ->

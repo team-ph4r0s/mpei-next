@@ -46,9 +46,8 @@ dependencies {
     implementation(libs.vivid.elmslie.android)
     implementation(libs.vivid.elmslie.core)
 
-    // for non-fatal analytics
-    compileOnly(libs.squareup.retrofit)
-    compileOnly(project(":ext_okhttp"))
+    // the exceptions of the network layer are only named in a catch
+    compileOnly(project(":lib_network"))
 
     implementation(project(":feature_app_settings_api"))
     implementation(project(":feature_dashboard_api"))
