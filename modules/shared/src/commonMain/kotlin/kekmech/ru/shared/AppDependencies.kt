@@ -15,6 +15,7 @@ import kekmech.ru.feature_schedule_shared.ScheduleService
 import kekmech.ru.feature_schedule_shared.ScheduleSnapshots
 import kekmech.ru.lib_bars_client.BarsApi
 import kekmech.ru.lib_settings.KeyValueStore
+import kekmech.ru.lib_settings.ThemeSettings
 import kekmech.ru.shared.map.MapDependencies
 import kotlin.time.ExperimentalTime
 
@@ -46,6 +47,7 @@ public class AppDependencies(
 
     public val reminderSettings: ClassReminderSettings = ClassReminderSettings(settings)
     public val changeSettings: ScheduleChangeSettings = ScheduleChangeSettings(settings)
+    public val themeSettings: ThemeSettings = ThemeSettings(settings)
 
     /** What runs in the background and when the app opens: the changes in the schedule and the reminders. */
     public val backgroundSync: ScheduleBackgroundSync = ScheduleBackgroundSync(
