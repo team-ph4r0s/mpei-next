@@ -22,7 +22,7 @@ import platform.Foundation.NSLocale
 import platform.Foundation.preferredLanguages
 import kotlin.time.ExperimentalTime
 
-private const val APP_VERSION = "0.5.2"
+private const val APP_VERSION = "0.5.3"
 
 /**
  * What the iOS app is made of. It is made once: the screens and the work in the background (when iOS wakes the app up

@@ -8,8 +8,8 @@ options:
 settings:
   base:
     PRODUCT_BUNDLE_IDENTIFIER: ru.mpei.hub
-    MARKETING_VERSION: "0.5.2"
-    CURRENT_PROJECT_VERSION: "64"
+    MARKETING_VERSION: "0.5.3"
+    CURRENT_PROJECT_VERSION: "65"
     SWIFT_VERSION: "5.0"
     TARGETED_DEVICE_FAMILY: "1,2"
     # the Gradle build phase below writes the framework outside of the sandbox
