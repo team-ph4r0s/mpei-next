@@ -3,8 +3,6 @@
 package kekmech.ru.feature_schedule_impl.data.network
 
 import io.ktor.client.plugins.HttpRequestTimeoutException
-import io.ktor.client.plugins.ResponseException
-import io.ktor.client.statement.bodyAsText
 import kekmech.ru.feature_schedule_api.domain.model.ScheduleType
 import kekmech.ru.feature_schedule_impl.data.model.ClassesDto
 import kekmech.ru.feature_schedule_impl.data.model.ClassesTypeDto
@@ -24,10 +22,6 @@ import kekmech.ru.feature_schedule_shared.Week
 import kekmech.ru.feature_schedule_shared.WeekOfSemester
 import kotlinx.datetime.toJavaLocalDate
 import kotlinx.datetime.toJavaLocalTime
-import okhttp3.MediaType.Companion.toMediaTypeOrNull
-import okhttp3.ResponseBody.Companion.toResponseBody
-import retrofit2.HttpException
-import retrofit2.Response
 import timber.log.Timber
 import java.net.SocketTimeoutException
 import kotlin.time.ExperimentalTime
@@ -36,8 +30,8 @@ import kekmech.ru.feature_schedule_shared.ScheduleType as SharedScheduleType
 
 /**
  * The schedule from the code that is shared with iOS ([SharedScheduleService]: Ktor, the mapper and the id cache),
- * in the form the Android screens, the cache and the widget have always had ([ScheduleDto]). The errors of Ktor are
- * turned into the ones that the screens know: [HttpException] for a bad status, [SocketTimeoutException] for a timeout.
+ * in the form the Android screens, the cache and the widget have always had ([ScheduleDto]). A bad status stays the
+ * `ResponseException` of Ktor, a timeout is turned into the [SocketTimeoutException] that the screens know.
  * It goes away when the Android models are replaced by the shared ones.
  */
 internal class KtorScheduleService(
@@ -62,10 +56,6 @@ internal class KtorScheduleService(
     private suspend fun <T> translateErrors(what: String, block: suspend () -> T): T =
         try {
             block()
-        } catch (e: ResponseException) {
-            Timber.tag(TAG).w(e, "MPEI request failed: $what")
-            val body = runCatching { e.response.bodyAsText() }.getOrDefault("")
-            throw HttpException(Response.error<Unit>(e.response.status.value, body.toResponseBody(JSON_MEDIA_TYPE)))
         } catch (e: HttpRequestTimeoutException) {
             Timber.tag(TAG).w(e, "MPEI request timed out: $what")
             throw SocketTimeoutException(e.message)
@@ -79,7 +69,6 @@ internal class KtorScheduleService(
 
     private companion object {
         const val TAG = "KtorScheduleService"
-        val JSON_MEDIA_TYPE = "application/json".toMediaTypeOrNull()
     }
 }
 

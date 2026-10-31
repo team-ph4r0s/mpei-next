@@ -80,6 +80,29 @@ internal class HttpClientFactoryTest {
     }
 
     @Test
+    fun `the page client tells only the user agent and does not ask for json`() = runTest {
+        var seen: HttpRequestData? = null
+        val engine = MockEngine { request ->
+            seen = request
+            respond("<html></html>", HttpStatusCode.OK)
+        }
+        createPageHttpClient(userAgent = "MPEI-Hub", engine = engine).get("https://example.org/page")
+
+        val headers = seen!!.headers
+        assertEquals("MPEI-Hub", headers[HttpHeaders.UserAgent])
+        assertEquals(null, headers["X-Device-Os"])
+        assertEquals(null, headers["X-App-Version"])
+        assertEquals(false, headers[HttpHeaders.Accept]?.contains("json") ?: false)
+    }
+
+    @Test
+    fun `the page client leaves a bad status to the caller`() = runTest {
+        val engine = MockEngine { respond("", HttpStatusCode.NotFound) }
+        val response = createPageHttpClient(userAgent = "MPEI-Hub", engine = engine).get("https://example.org/gone")
+        assertEquals(404, response.status.value)
+    }
+
+    @Test
     fun `service url depends on the environment`() {
         assertEquals("https://ts.mpei.ru/api/", ServiceUrlResolver.resolve(BackendServiceUrl.MPEI_TIMETABLE))
         ServiceUrlResolver.setAppEnvironment(AppEnvironment.MOCK)

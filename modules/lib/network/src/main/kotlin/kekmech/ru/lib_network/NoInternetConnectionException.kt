@@ -1,4 +1,4 @@
-package kekmech.ru.ext_okhttp
+package kekmech.ru.lib_network
 
 import java.io.IOException
 

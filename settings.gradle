@@ -25,14 +25,6 @@ dependencyResolutionManagement {
     repositories {
         google()
         mavenCentral()
-        // Libraries that are vendored into the repository (see third_party/README.md): no network, no tokens
-        maven {
-            name = "VendoredLibs"
-            url = uri(layout.rootDirectory.dir("third_party/maven").asFile)
-            content {
-                includeGroup("com.kekmech")
-            }
-        }
     }
     versionCatalogs.create("mpeix").from(files("gradle/mpeix.versions.toml"))
 }

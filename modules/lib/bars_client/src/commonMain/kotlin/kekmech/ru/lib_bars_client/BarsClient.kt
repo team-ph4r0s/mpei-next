@@ -3,7 +3,6 @@ package kekmech.ru.lib_bars_client
 import io.ktor.client.HttpClient
 import io.ktor.client.HttpClientConfig
 import io.ktor.client.engine.HttpClientEngine
-import io.ktor.client.plugins.UserAgent
 import io.ktor.client.plugins.cookies.CookiesStorage
 import io.ktor.client.plugins.cookies.HttpCookies
 import io.ktor.client.request.accept
@@ -19,6 +18,7 @@ import io.ktor.http.HttpMethod
 import io.ktor.http.Parameters
 import io.ktor.http.URLBuilder
 import io.ktor.http.takeFrom
+import kekmech.ru.lib_http.createPageHttpClient
 import kekmech.ru.lib_bars_parser.BarsAuthParser
 import kekmech.ru.lib_bars_parser.BarsHtmlParser
 import kekmech.ru.lib_bars_parser.BarsMarksPage
@@ -37,10 +37,11 @@ private const val MAX_REDIRECTS = 8
 private fun HttpClientConfig<*>.configureBars(cookies: CookiesStorage) {
     // The redirects are followed by hand in BarsClient.send(): Ktor does not follow the one that answers a POST
     followRedirects = false
-    expectSuccess = false
     install(HttpCookies) { storage = cookies }
-    install(UserAgent) { agent = "MPEI-Hub" }
 }
+
+// BARS is slow and sometimes accepts a connection and never answers
+private const val BARS_TIMEOUT_MILLIS = 30_000L
 private val STUDENT_ID_IN_URL = Regex("studentID=([0-9a-fA-F-]{36})", RegexOption.IGNORE_CASE)
 
 /**
@@ -55,7 +56,8 @@ private val STUDENT_ID_IN_URL = Regex("studentID=([0-9a-fA-F-]{36})", RegexOptio
  * saved, [restoreSession] brings them back, [logout] and a session that BARS has closed erase them. Only the cookies
  * are kept, never the login and the password. The calls are serialized, one at a time.
  *
- * @param engine the engine of the HTTP client; null takes the one of the platform (Darwin on iOS, CIO on JVM)
+ * @param engine the engine of the HTTP client; null takes the one of the platform (Darwin on iOS, OkHttp on JVM). The client
+ * itself is the page client of `:lib_http`, the same as the rest of the app uses
  * @param sessionStore where the session is kept between the launches; the default forgets it with the process
  */
 class BarsClient(
@@ -334,8 +336,11 @@ class BarsClient(
         sessionStore.save(BarsStoredSession(cookies = jar.snapshot(), studentId = studentId))
     }
 
-    private fun createHttp(): HttpClient =
-        engine?.let { HttpClient(it) { configureBars(jar) } } ?: HttpClient { configureBars(jar) }
+    private fun createHttp(): HttpClient = createPageHttpClient(
+        userAgent = "MPEI-Hub",
+        engine = engine,
+        timeoutMillis = BARS_TIMEOUT_MILLIS,
+    ) { configureBars(jar) }
 
     private class BarsResponse(val status: Int, val body: String, val url: String)
 

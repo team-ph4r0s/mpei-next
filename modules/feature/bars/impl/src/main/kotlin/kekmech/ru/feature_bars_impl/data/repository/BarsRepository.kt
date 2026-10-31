@@ -1,19 +1,37 @@
 package kekmech.ru.feature_bars_impl.data.repository
 
 import android.os.Parcelable
-import com.kekmech.lib_bars.BarsHandle
 import com.tencent.mmkv.MMKV
 import kekmech.ru.ext_kotlin.fromBase64
 import kekmech.ru.ext_kotlin.toBase64
 import kekmech.ru.feature_bars_api.BarsLogoutHandle
+import kekmech.ru.feature_bars_impl.data.network.KeystoreBarsSessionStore
 import kekmech.ru.feature_bars_impl.domain.AssessedDiscipline
 import kekmech.ru.feature_bars_impl.presentation.screen.login.elm.Account
+import kekmech.ru.lib_bars_client.BarsApi
+import kekmech.ru.lib_bars_parser.BarsStudentLink
+import kekmech.ru.lib_bars_parser.BarsTwoFactorPage
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.launch
 import kotlinx.parcelize.Parcelize
 
 internal class BarsRepository(
-    private val barsHandle: BarsHandle,
+    val api: BarsApi,
+    private val sessionStore: KeystoreBarsSessionStore,
 ) : BarsLogoutHandle {
+
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+
+    /** The page that asks for the code, while the student is entering it. Kept in memory only. */
+    @Volatile
+    var twoFactorPage: BarsTwoFactorPage? = null
+
+    /** The students of the account that has just signed in, for the choice of the one whose marks are shown. */
+    @Volatile
+    var students: List<BarsStudentLink> = emptyList()
 
     private val storage = MMKV.mmkvWithID("bars")
 
@@ -70,15 +88,29 @@ internal class BarsRepository(
         return container?.disciplines
     }
 
+    /** BARS has closed the session by itself: the saved student is of no use any more. */
+    fun onSessionExpired() {
+        val currentId = storage.decodeString("current_user_id")
+        if (currentId != null) {
+            storage.removeValueForKey("current_user_id")
+            storage.removeValueForKey("user-$currentId")
+            storage.removeValueForKey(disciplinesKey(currentId))
+        }
+        loginStateTrigger.tryEmit(Unit)
+    }
+
     override fun logout(): Boolean {
+        // The session is erased here and now, the portal is told in the background
+        sessionStore.clearNow()
+        twoFactorPage = null
+        students = emptyList()
+        scope.launch { runCatching { api.logout() } }
         val currentId = storage.decodeString("current_user_id") ?: return false
-        barsHandle.auth.logout()
         storage.removeValueForKey("current_user_id")
         storage.removeValueForKey("user-$currentId")
         storage.removeValueForKey(disciplinesKey(currentId))
         storage.removeValueForKey(legacyDisciplinesKey(currentId))
         loginStateTrigger.tryEmit(Unit)
-        kekmech.ru.feature_bars_impl.data.network.BarsTwoFactorSessionHolder.reset()
         return true
     }
 

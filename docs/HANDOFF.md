@@ -48,7 +48,8 @@
      на Android не сверялось отдельно.
    - #11 (кнопка «назад»): на iOS нет `NavHost`, экран «Настройки» закрывается стрелкой в `TopAppBar`; системного жеста назад нет, не делалось. #12 (шиммер): код есть,
      в Appetize не наблюдался (сеть быстрая). #14 (Material3 1.4.0-beta01): решение владельца.
-   - #20 (единый сетевой клиент: `lib_bars_client` на `lib_http`, убрать `lib_bars` и Retrofit/OkHttp-слой) — отдельная крупная задача, не начата.
+   - #20 (единый сетевой клиент) — сделано 31.10.2026, см. раздел 4: на Android один Ktor-клиент над движком OkHttp, Retrofit, `ext_okhttp` и вендоренный `lib_bars` (с `third_party/`) удалены.
+     На эмуляторе не проверены: вход в БАРС с настоящими логином и кодом (нет учётных данных), выбор студента, оценки, переживание перезапуска сессии в Keystore. Проверено: форма входа доходит до bars.mpei.ru и показывает «Неверный логин или пароль» (debug и release с R8), расписание, поиск, офлайн, Chucker.
 6. **Решено не делать** (не возвращаться без новой просьбы владельца): замена Android-моделей расписания (`feature_schedule_api`, `ScheduleDto`) на общие
    (77 файлов, `java.time`, Bundle, виджет, будильники — пользы для iOS нет); Firebase на iOS и на Android (убран из обеих версий).
 7. **Отложено до решения владельца**: виджет WidgetKit (Swift, отдельное расширение; на бесплатном Apple ID App Groups ограничены, можно сделать вариант,
@@ -91,18 +92,18 @@
 
 Общий код живёт в KMP-модулях (цели jvm + iosArm64 + iosSimulatorArm64, конвенция `mpeix.lib.kmp`; с Android-таргетом — `mpeix.lib.kmp.android`).
 - **Фундамент (M1):** `ext_kotlin`, `ext_koin`, `lib_coroutines`, `lib_elm`, `ext_datetime`, `lib_settings` (`KeyValueStore`: `NSUserDefaults` на iOS, адаптер
-  `SharedPreferences` в `ext_shared_preferences`), `lib_http` (Ktor + каталог `BackendServiceUrl`, в нём `APP_CONFIG`, `MAP`, `MPEI_TIMETABLE`),
+  `SharedPreferences` в `ext_shared_preferences`), `lib_http` (Ktor: `createHttpClient` для JSON API, `createPageHttpClient` для страниц чужих сайтов; каталог `BackendServiceUrl`). На Android `lib_network` собирает единственный клиент над движком OkHttp (заголовки приложения = `ClientIdentity`, проверка соединения `NoConnectionInterceptor`, Chucker в debug/qa — перехватчики движка, лог Ktor вне PROD),
   `lib_mpei_api`, `lib_navigator`, `lib_navigator_compose`, `lib_elm_ui`.
 - **Дизайн (M2):** `ui_theme` (палитра, шрифты Roboto), `ui_kit_*` (навигация, кнопки, диалоги, списки, переключатели…), `ui_icons`, `ui_shimmer`, `ui_map` (см. ниже).
 - **Расписание (M3), `feature_schedule_shared`:** модели (`@Serializable`), `MpeiScheduleMapper`, `ScheduleService` (кэш id под `Mutex`, студенты отфильтрованы),
   `ScheduleCache`, `FavoriteSchedules`, `ScheduleController`, `WeekLoader` (неделя из сети или из копии), `DashboardController` + `upcomingClasses`,
   `ClassReminderPlanner`/`RemindersController`, `ScheduleChangeDetector`/`ScheduleChangeText`/`ScheduleSnapshots`/`ScheduleChangeChecker`/`ScheduleBackgroundSync`.
-  Android ходит в сеть через `KtorScheduleService` (обёртка над общим сервисом, отдаёт старые `ScheduleDto`; ошибки Ktor переводятся в `retrofit2.HttpException`/`SocketTimeoutException`).
+  Android ходит в сеть через `KtorScheduleService` (обёртка над общим сервисом, отдаёт старые `ScheduleDto`; `ResponseException` Ktor остаётся как есть, `HttpRequestTimeoutException` переводится в `SocketTimeoutException`).
 - **Заметки (M4):** `feature_notes_shared` (JSON в `KeyValueStore`; Android остаётся на Room).
 - **Карта (M5):** `feature_map_shared` (`MapMarkersRepository`, `MapController`, `WebMercator`, `MapCamera`) и `ui_map` (`MpeiMap`, `MapScreen`, `TileLoader`, `MarkerIcons`).
   **Android `MapFragment` тоже на `MapScreen`** (`osmdroid`, ELM-стор карты, шторка, `lib_emoji` удалены); поиск мест (`feature_search`) всё ещё берёт метки из старого `MapRepository`.
   Тайлы грузит отдельный клиент `tileHttpClient` (на обеих платформах).
-- **БАРС (M6):** `feature_bars_shared`, `lib_bars_client`, `lib_bars_parser`; на iOS сессия в Keychain.
+- **БАРС (M6):** `feature_bars_shared`, `lib_bars_client`, `lib_bars_parser`; на iOS сессия в Keychain, на Android в `KeystoreBarsSessionStore` (AES-GCM, ключ в Android Keystore). Экраны Android (`feature_bars_impl`) ходят в портал через тот же `BarsClient` (`BarsApi`), клиент страниц — `createPageHttpClient` из `lib_http` (без заголовков приложения). После обновления с версии на `lib_bars` БАРС просит войти заново (старая сессия не переносится).
 - **iOS-оболочка:** `modules/shared` — `App`, `AppDependencies` (всё, из чего собрано приложение), `IosAppGraph`, экраны (`dashboard`, `schedule`, `notes`, `settings`, `bars`, `ClassCard`,
   `AppNavigationBar`), `IosReminderScheduler`, `IosChangeNotifier`, `IosBackground`; Swift: `iosApp/iosApp/` (`iOSApp.swift`, `ContentView.swift`, `BackgroundRefresh.swift`), проект генерирует XcodeGen из `iosApp/project.yml`.
 - **Настройки без выпуска версии:** `statics/app/config.json` (принудительное обновление, тоггл снежинок; читает `RepoRemoteConfig` на Android). **Firebase нет нигде**, README это утверждает и это правда.

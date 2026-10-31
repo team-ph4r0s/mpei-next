@@ -13,14 +13,12 @@ import kekmech.ru.feature_map_impl.presentation.MapViewModel
 import kekmech.ru.feature_map_shared.AppearanceStorage
 import kekmech.ru.feature_map_shared.MapMarkersRepository
 import kekmech.ru.lib_app_info.AppVersionName
-import kekmech.ru.lib_network.buildApi
 import kekmech.ru.ui_map.tileHttpClient
 import org.koin.android.ext.koin.androidContext
 import org.koin.core.module.dsl.factoryOf
 import org.koin.core.module.dsl.singleOf
 import org.koin.dsl.bind
 import org.koin.dsl.module
-import retrofit2.Retrofit
 
 private const val MARKERS_PREFERENCES = "map_markers"
 private const val BUNDLED_MARKERS = "markers.json"
@@ -51,6 +49,6 @@ val FeatureMapModule = module {
     }
 
     // the markers for the search of the places
-    single { get<Retrofit.Builder>().buildApi<MapService>() } bind MapService::class
+    singleOf(::MapService)
     factoryOf(::MapRepositoryImpl) bind MapRepository::class
 }

@@ -18,7 +18,7 @@ import kekmech.ru.feature_schedule_impl.data.network.KtorScheduleService
 import kekmech.ru.lib_http.ClientIdentity
 import kekmech.ru.lib_http.createHttpClient
 import kekmech.ru.lib_mpei_api.MpeiScheduleApi
-import retrofit2.HttpException
+import io.ktor.client.plugins.ResponseException
 import java.time.LocalDate
 import java.time.LocalTime
 import kotlin.time.Clock
@@ -84,11 +84,11 @@ class KtorScheduleServiceTest : BehaviorSpec({
     }
 
     given("the portal answers with a bad request") {
-        then("the screens get the HttpException with the same code") {
-            val error = shouldThrow<HttpException> {
+        then("the screens get the ResponseException with the same code") {
+            val error = shouldThrow<ResponseException> {
                 service(HttpStatusCode.BadRequest).getSearchResults("%%", null)
             }
-            error.code() shouldBe 400
+            error.response.status.value shouldBe 400
         }
     }
 })

@@ -158,7 +158,6 @@ mpei-next/
 ├── build-logic/                # Gradle build conventions and internal project plugins
 ├── gradle/                     # Version Catalog (libs.versions.toml) and Gradle Wrapper
 ├── docs/                       # Release procedures (RELEASE.md), iOS roadmap (IOS.md), archives
-├── third_party/                # Vendored dependencies (local Maven repo, lib_bars)
 ├── statics/                    # Remote map marker definitions and dynamic BARS configs
 ├── modules/
 │   ├── app/                    # Entry point, Application class, root navigation graph, SplashScreen

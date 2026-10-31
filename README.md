@@ -158,7 +158,6 @@ mpei-next/
 ├── build-logic/                # Конвенции сборки и Gradle-плагины проекта
 ├── gradle/                     # Version Catalog (libs.versions.toml) и Gradle Wrapper
 ├── docs/                       # Релизы (RELEASE.md), дорожная карта iOS (IOS.md), архив
-├── third_party/                # Сторонние артефакты (локальный Maven, вендоренный lib_bars)
 ├── statics/                    # Данные маркеров карты и конфиги БАРС, обновляемые через GitHub
 ├── modules/
 │   ├── app/                    # Точка входа, Application, навигационный граф, SplashScreen
