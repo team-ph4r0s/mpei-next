@@ -23,7 +23,6 @@ internal class HttpClientFactoryTest {
 
     private val identity = ClientIdentity(
         userAgent = "mpeixTestClient/1.0",
-        deviceId = "device-1",
         deviceOs = "iOS",
         deviceLocale = "ru",
         appVersion = "0.5.2",
@@ -50,7 +49,6 @@ internal class HttpClientFactoryTest {
 
         val headers = seen!!.headers
         assertEquals("mpeixTestClient/1.0", headers[HttpHeaders.UserAgent])
-        assertEquals("device-1", headers["X-Device-Id"])
         assertEquals("iOS", headers["X-Device-Os"])
         assertEquals("ru", headers["X-Device-Locale"])
         assertEquals("0.5.2", headers["X-App-Version"])

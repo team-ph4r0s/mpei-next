@@ -36,7 +36,7 @@ class MapDemoActivity : ComponentActivity() {
 @Composable
 private fun MapDemo() {
     val scope = rememberCoroutineScope()
-    val client = remember { createHttpClient(ClientIdentity("MPEI-Hub-demo/1.0", "demo", "Android", "ru", "1.0")) }
+    val client = remember { createHttpClient(ClientIdentity("MPEI-Hub-demo/1.0", "Android", "ru", "1.0")) }
     val store = remember { InMemoryKeyValueStore() }
     val controller = remember { MapController(MapMarkersRepository(client, store), store, scope) }
     val loader = remember { TileLoader(scope, tileHttpClient("MPEI-Hub-demo/1.0").tileFetcher()) }

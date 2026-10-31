@@ -17,7 +17,7 @@ import kotlin.test.assertFailsWith
 
 internal class MpeiScheduleApiTest {
 
-    private val identity = ClientIdentity("test/1.0", "device", "iOS", "ru", "0.5.2")
+    private val identity = ClientIdentity("test/1.0", "iOS", "ru", "0.5.2")
     private val jsonHeaders = headersOf(HttpHeaders.ContentType, "application/json")
 
     private val requests = mutableListOf<HttpRequestData>()

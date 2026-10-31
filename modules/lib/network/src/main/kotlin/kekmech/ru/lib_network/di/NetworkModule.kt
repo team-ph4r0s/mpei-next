@@ -9,7 +9,6 @@ import kekmech.ru.ext_okhttp.RequiredHeadersInterceptor
 import kekmech.ru.lib_app_info.AppVersionName
 import kekmech.ru.lib_network.AppEnvironment
 import kekmech.ru.lib_network.ServiceUrlResolver
-import kekmech.ru.lib_network.device_id.DeviceIdProvider
 import kekmech.ru.lib_network.device_id.DeviceLocaleProvider
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.okhttp.OkHttp
@@ -37,7 +36,6 @@ import java.util.concurrent.TimeUnit
 private const val DEFAULT_REQUEST_TIMEOUT = 15L
 
 public val LibraryNetworkModule: Module = module {
-    factoryOf(::DeviceIdProvider)
     factoryOf(::DeviceLocaleProvider)
     singleOf(::provideRetrofitBuilder) bind Retrofit.Builder::class
     singleOf(::provideJson) bind Json::class
@@ -46,7 +44,6 @@ public val LibraryNetworkModule: Module = module {
 
     single {
         RequiredHeadersInterceptor(
-            deviceId = get<DeviceIdProvider>().getDeviceId(),
             appVersion = get<AppVersionName>().versionName,
             deviceLanguage = get<DeviceLocaleProvider>().getLanguage(),
         )
@@ -104,7 +101,6 @@ private fun provideHttpClient(okHttpClient: OkHttpClient): HttpClient =
     createHttpClient(
         identity = ClientIdentity(
             userAgent = "mpeixAndroidClient/1.0",
-            deviceId = "",
             deviceOs = "Android",
             deviceLocale = "",
             appVersion = "",

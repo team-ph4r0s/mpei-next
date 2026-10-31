@@ -19,13 +19,10 @@ import kekmech.ru.shared.reminders.IosReminderScheduler
 import kekmech.ru.ui_map.tileFetcher
 import kekmech.ru.ui_map.tileHttpClient
 import platform.Foundation.NSLocale
-import platform.Foundation.NSUUID
-import platform.Foundation.NSUserDefaults
 import platform.Foundation.preferredLanguages
 import kotlin.time.ExperimentalTime
 
 private const val APP_VERSION = "0.5.2"
-private const val KEY_DEVICE_ID = "mpeix_device_id"
 
 /**
  * What the iOS app is made of. It is made once: the screens and the work in the background (when iOS wakes the app up
@@ -58,13 +55,9 @@ internal object IosAppGraph {
     }
 
     private fun clientIdentity(): ClientIdentity {
-        val defaults = NSUserDefaults.standardUserDefaults
-        val deviceId = defaults.stringForKey(KEY_DEVICE_ID)
-            ?: NSUUID().UUIDString().also { defaults.setObject(it, forKey = KEY_DEVICE_ID) }
         val locale = (NSLocale.preferredLanguages.firstOrNull() as? String) ?: "ru"
         return ClientIdentity(
             userAgent = "MPEI-Hub/$APP_VERSION (iOS)",
-            deviceId = deviceId,
             deviceOs = "iOS",
             deviceLocale = locale,
             appVersion = APP_VERSION,
