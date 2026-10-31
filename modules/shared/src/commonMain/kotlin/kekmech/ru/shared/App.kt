@@ -81,7 +81,11 @@ public fun App(dependencies: AppDependencies) {
             var showSettings by remember { mutableStateOf(false) }
             val tileLoader = remember(map) { TileLoader(scope, map.tiles) }
             val scheduleState by schedule.state.collectAsState()
-            val selected = (scheduleState as? ScheduleUiState.Week)?.selected
+            // while the search of another schedule is open, the chosen one is still the chosen one
+            val selected = when (val state = scheduleState) {
+                is ScheduleUiState.Week -> state.selected
+                is ScheduleUiState.Search -> if (state.canCancel) scheduleCache.selected() else null
+            }
             var tab by remember { mutableIntStateOf(TAB_HOME) }
             LaunchedEffect(notes, selected?.name) { notes.setSchedule(selected?.name) }
             // the home screen is loaded again every time it appears, so "now" is not stale
@@ -112,7 +116,16 @@ public fun App(dependencies: AppDependencies) {
                         .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Top + WindowInsetsSides.Horizontal)),
                 ) {
                     when (tab) {
-                        TAB_HOME -> DashboardScreen(dashboard, notes, onChooseSchedule = { tab = TAB_SCHEDULE }, onOpenSettings = { showSettings = true })
+                        TAB_HOME -> DashboardScreen(
+                            dashboard,
+                            notes,
+                            // the search of the schedule opens at once; the group that was chosen stays until another one is picked
+                            onChooseSchedule = {
+                                schedule.startSearch()
+                                tab = TAB_SCHEDULE
+                            },
+                            onOpenSettings = { showSettings = true },
+                        )
                         TAB_SCHEDULE -> ScheduleScreen(schedule, notes)
                         TAB_NOTES -> NotesScreen(notes, selected?.name)
                         TAB_MAP -> MapScreen(mapController, tileLoader)

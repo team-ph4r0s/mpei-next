@@ -5,6 +5,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
@@ -24,6 +25,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -31,6 +33,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
+import kekmech.ru.ext_datetime.moscowDate
 import kekmech.ru.feature_notes_shared.Note
 import kekmech.ru.feature_notes_shared.NotesController
 import kekmech.ru.feature_schedule_shared.Classes
@@ -46,6 +49,7 @@ import kekmech.ru.feature_schedule_shared.Week
 import kekmech.ru.feature_schedule_shared.WeekOfSemester
 import kekmech.ru.ui_shimmer.shimmer
 import kotlinx.datetime.LocalDate
+import kotlin.time.ExperimentalTime
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.LocalTime
 
@@ -60,13 +64,14 @@ public fun ScheduleScreen(controller: ScheduleController, notes: NotesController
             onSelect = controller::select,
             onFavorite = controller::openFavorite,
             onRemoveFavorite = controller::removeFavorite,
+            onCancel = controller::cancelSearch,
         )
         is ScheduleUiState.Week -> WeekView(
             state = current,
             onPrevious = { controller.shiftWeek(-1) },
             onNext = { controller.shiftWeek(1) },
             onRefresh = controller::refresh,
-            onChange = controller::changeSchedule,
+            onChange = controller::startSearch,
             onToggleFavorite = controller::toggleFavorite,
             notes = notes,
         )
@@ -80,9 +85,13 @@ private fun SearchView(
     onSelect: (SearchResult) -> Unit,
     onFavorite: (SelectedSchedule) -> Unit,
     onRemoveFavorite: (SelectedSchedule) -> Unit,
+    onCancel: () -> Unit,
 ) {
     Column(Modifier.fillMaxSize().padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        Text("Расписание", style = MaterialTheme.typography.headlineSmall)
+        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
+            Text("Расписание", style = MaterialTheme.typography.headlineSmall)
+            if (state.canCancel) TextButton(onClick = onCancel) { Text("Отмена") }
+        }
         if (state.favorites.isEmpty() && state.query.isEmpty()) {
             Text(
                 "Введите номер группы (например, А-01-22) или фамилию преподавателя, чтобы открыть расписание.",
@@ -203,25 +212,29 @@ private fun WeekView(
 /** The class that a note is written for: the class and the moment it starts. */
 private class NoteTarget(val classes: Classes, val dateTime: LocalDateTime)
 
+@OptIn(ExperimentalTime::class)
 @Composable
 private fun DaysList(week: Week?, notes: List<Note>, onEditNote: (NoteTarget) -> Unit) {
     if (week == null) return
-    LazyColumn(Modifier.fillMaxSize().padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-        items(week.days) { day -> DayView(day, notes, onEditNote) }
-    }
-}
-
-@Composable
-private fun DayView(day: Day, notes: List<Note>, onEditNote: (NoteTarget) -> Unit) {
-    Column(Modifier.fillMaxWidth().padding(vertical = 8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Text(dayTitle(day.date), style = MaterialTheme.typography.titleMedium)
-        if (day.classes.isEmpty()) {
-            Text("Занятий нет", style = MaterialTheme.typography.bodySmall)
-        }
-        day.classes.forEach { classes ->
-            val dateTime = LocalDateTime(day.date, classes.time.start)
-            val note = notes.firstOrNull { it.classesName == classes.name && it.dateTime == dateTime }
-            ClassCard(classes, note, onClick = { onEditNote(NoteTarget(classes, dateTime)) })
+    val today = remember { moscowDate() }
+    var selected by remember(week.firstDayOfWeek) { mutableIntStateOf(initialDayIndex(week, today)) }
+    val day = week.days.getOrNull(selected) ?: return
+    Column(Modifier.fillMaxSize()) {
+        DaySelector(week, today, selected, onSelect = { selected = it })
+        LazyColumn(
+            Modifier.fillMaxSize().padding(horizontal = 16.dp),
+            contentPadding = PaddingValues(vertical = 8.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            item { Text(dayTitle(day.date), style = MaterialTheme.typography.titleMedium) }
+            if (day.classes.isEmpty()) {
+                item { Text("Занятий нет", style = MaterialTheme.typography.bodyMedium) }
+            }
+            items(day.classes) { classes ->
+                val dateTime = LocalDateTime(day.date, classes.time.start)
+                val note = notes.firstOrNull { it.classesName == classes.name && it.dateTime == dateTime }
+                ClassCard(classes, note, onClick = { onEditNote(NoteTarget(classes, dateTime)) })
+            }
         }
     }
 }

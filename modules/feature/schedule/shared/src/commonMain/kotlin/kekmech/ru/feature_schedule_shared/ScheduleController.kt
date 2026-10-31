@@ -21,6 +21,8 @@ public sealed interface ScheduleUiState {
         val results: List<SearchResult> = emptyList(),
         val busy: Boolean = false,
         val favorites: List<SelectedSchedule> = emptyList(),
+        /** `true` when a schedule is chosen already: the search can be left without choosing another one. */
+        val canCancel: Boolean = false,
         val error: String? = null,
     ) : ScheduleUiState
 
@@ -126,7 +128,13 @@ public class ScheduleController(
         query: String = "",
         results: List<SearchResult> = emptyList(),
         error: String? = null,
-    ) = ScheduleUiState.Search(query = query, results = results, favorites = favorites.list(), error = error)
+    ) = ScheduleUiState.Search(
+        query = query,
+        results = results,
+        favorites = favorites.list(),
+        error = error,
+        canCancel = cache.selected() != null,
+    )
 
     /** [delta] weeks forward (positive) or back (negative) from the shown one. */
     public fun shiftWeek(delta: Int) {
@@ -147,6 +155,22 @@ public class ScheduleController(
         val next = current.copy(loading = true, error = null)
         mutableState.value = next
         loadWeek(next)
+    }
+
+    /** Opens the search of another schedule; the chosen one stays chosen until another is picked (see [cancelSearch]). */
+    public fun startSearch() {
+        weekJob?.cancel()
+        mutableState.value = searchState()
+    }
+
+    /** Leaves the search and shows the schedule that was chosen before. */
+    public fun cancelSearch() {
+        if (mutableState.value !is ScheduleUiState.Search) return
+        searchJob?.cancel()
+        val selected = cache.selected() ?: return
+        val week = weekState(selected)
+        mutableState.value = week
+        loadWeek(week)
     }
 
     /** Back to the search of the group; the cached weeks of the previous schedule stay on the device. */

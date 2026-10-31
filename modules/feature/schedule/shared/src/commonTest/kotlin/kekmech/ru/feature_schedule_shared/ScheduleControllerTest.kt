@@ -261,6 +261,47 @@ internal class ScheduleControllerTest {
     private val selectedGroup = SelectedSchedule(ScheduleType.GROUP, "А-01-22")
 
     @Test
+    fun `the search of another schedule keeps the chosen one until another is picked`() = runTest {
+        val controller = controller(this)
+        controller.onQueryChange("А-01")
+        settle(controller)
+        controller.select(found)
+        settle(controller)
+
+        controller.startSearch()
+
+        val search = controller.state.value as ScheduleUiState.Search
+        assertEquals(true, search.canCancel)
+        assertEquals(selectedGroup, ScheduleCache(store).selected())
+    }
+
+    @Test
+    fun `leaving the search brings back the chosen schedule`() = runTest {
+        val controller = controller(this)
+        controller.onQueryChange("А-01")
+        settle(controller)
+        controller.select(found)
+        settle(controller)
+        controller.startSearch()
+
+        controller.cancelSearch()
+        settle(controller)
+
+        val week = controller.state.value as ScheduleUiState.Week
+        assertEquals(selectedGroup, week.selected)
+        assertNotNull(week.schedule)
+    }
+
+    @Test
+    fun `a search with nothing chosen cannot be cancelled`() = runTest {
+        val controller = controller(this)
+
+        assertEquals(false, (controller.state.value as ScheduleUiState.Search).canCancel)
+        controller.cancelSearch()
+        assertIs<ScheduleUiState.Search>(controller.state.value)
+    }
+
+    @Test
     fun `the star adds the shown schedule to the favorites and removes it`() = runTest {
         val controller = controller(this)
         controller.onQueryChange("А-01")
