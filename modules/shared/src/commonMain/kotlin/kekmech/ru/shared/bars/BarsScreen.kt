@@ -26,6 +26,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
@@ -80,7 +81,7 @@ private fun SignInView(state: BarsUiState.SignIn, onSignIn: (String, String) -> 
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         Spacer(Modifier.height(32.dp))
-        Text("БАРС МЭИ", style = MaterialTheme.typography.headlineMedium)
+        Text("БАРС МЭИ", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
         Text(
             "Войдите тем же логином и паролем, что и на сайте БАРС. Пароль уходит только в БАРС и нигде не сохраняется.",
             style = MaterialTheme.typography.bodyMedium,
@@ -128,7 +129,7 @@ private fun CodeView(
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         Spacer(Modifier.height(32.dp))
-        Text("Код подтверждения", style = MaterialTheme.typography.headlineMedium)
+        Text("Код подтверждения", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
         state.info?.let { Text(it, style = MaterialTheme.typography.bodyMedium) }
         OutlinedTextField(
             value = code,
