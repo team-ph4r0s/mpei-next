@@ -66,7 +66,7 @@ internal class AppSettingsComposeFragment : ComposeFragment() {
                             addScreenForward { scheduleFeatureApi.getNotificationSettingsScreen() }
                         },
                         onOpenGithub = {
-                            requireContext().openLinkExternal("https://github.com/ghostoftheeleven/mpei-next")
+                            requireContext().openLinkExternal("https://github.com/team-ph4r0s/mpei-next")
                         },
                         onOpenContributor = { url ->
                             requireContext().openLinkExternal(url)

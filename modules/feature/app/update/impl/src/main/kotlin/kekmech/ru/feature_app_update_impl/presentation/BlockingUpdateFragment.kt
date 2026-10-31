@@ -16,7 +16,7 @@ import kekmech.ru.feature_app_update_impl.domain.models.ForceUpdateInfo
 import kekmech.ru.res_strings.R.string as Strings
 
 private const val ARG_UPDATE_INFO = "Arg.UpdateInfo"
-private const val LINK_GITHUB = "https://github.com/ghostoftheeleven/mpei-next/issues"
+private const val LINK_GITHUB = "https://github.com/team-ph4r0s/mpei-next/issues"
 
 class BlockingUpdateFragment : Fragment(R.layout.fragment_blocking_update) {
 

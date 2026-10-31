@@ -1,16 +1,17 @@
 # Где мы остановились (заметка для следующей сессии)
 
-Обновлено 31.10.2026. Репозиторий: `ghostoftheeleven/mpei-next`, работа идёт прямо в `main` (правило владельца: без веток и PR,
+Обновлено 31.10.2026. Репозиторий: `team-ph4r0s/mpei-next`, работа идёт прямо в `main` (правило владельца: без веток и PR,
 пушить каждый законченный срез сразу). Коммиты заканчиваются строкой `Co-Authored-By: Syberia <noreply@syberia.invalid>`.
-План iOS и статус по этапам — задача [#5](https://github.com/ghostoftheeleven/mpei-next/issues/5) (чекбоксы в ней и в дочерних
+План iOS и статус по этапам — задача [#5](https://github.com/team-ph4r0s/mpei-next/issues/5) (чекбоксы в ней и в дочерних
 отстают, ориентироваться на этот файл). Рабочая папка: `C:\dev\MPEI Hub\mpei-next` (путь без кириллицы, это важно).
 
 ## 1. На чём остановились
 
-- CI по `66551a8a` зелёный (Android и iOS). Последняя работа: Главная iOS доведена до Android (см. раздел 2, пункт 2).
-  Всё закоммичено и запушено, незакоммиченных изменений нет.
-- **На момент записки CI по `66551a8a`: Android зелёный, iOS ещё идёт** (~25 мин). Первым делом в новой сессии:
-  `gh run list --limit 4`. Если iOS упал, смотреть `gh run view <id> --log-failed`: это почти наверняка ошибка компиляции Kotlin/Native
+- **Репозиторий переехал 31.10.2026** из `ghostoftheeleven/mpei-next` в организацию Team Ph4r0s: `team-ph4r0s/mpei-next`. Ссылки в приложении, документах и
+  `BackendServiceUrl` обновлены; старый адрес GitHub перенаправляет. **Нельзя создавать новый репозиторий `mpei-next` у `ghostoftheeleven`: перенаправление
+  пропадёт, а установленные v0.5.x читают данные (`statics/`, ветка `master`) по старому адресу, см. задачу #9.** В списке авторов приложения остаётся личный профиль
+  `ghostoftheeleven` (это человек, не репозиторий).
+- Первым делом в новой сессии: `gh run list --limit 4`. Если iOS упал, смотреть `gh run view <id> --log-failed`: это почти наверняка ошибка компиляции Kotlin/Native
   в общем коде (локально проверяются только `compileCommonMainKotlinMetadata` и `compileIosMainKotlinMetadata`, они не ловят всё).
 - Последняя работа: **сравнение iOS-версии с Android через Appetize** и правки по нему. Что нашли и что сделано:
   - сделано: отступы системных панелей применяются один раз (`App.kt`, `WindowInsets.safeDrawing`, верх и бока); нижняя панель из
@@ -26,7 +27,7 @@
   Вкладка Chrome с Appetize оставлена на главной странице `https://appetize.io/` (сессия симулятора закрыта).
   Прокрутка в Appetize: колесо мыши не работает, нужен `left_click_drag` снизу вверх (первый жест в пачке иногда теряется, делать по два).
 
-- **Релиз v0.5.2 опубликован 31.10.2026**: https://github.com/ghostoftheeleven/mpei-next/releases/tag/v0.5.2 (подписанный APK `MPEI-Hub-v0.5.2-release.apk` и неподписанный `MPEI-Hub-v0.5.2-ios-unsigned.ipa`, собран в CI по коммиту `cc8217e4`). Секреты `SIGNING_*` в GitHub добавлены владельцем; выпуск идёт через Actions → Release APK (тег и `publish = true`), `.ipa` прикладывается вручную: `gh run download <id iOS> -n ios-ipa-unsigned`, затем `gh release upload`. Смоук-тест выпуска ищет на вкладке «Карта» слова «Поиск мест» или «Спутник» (общий `MapScreen`).
+- **Релиз v0.5.2 опубликован 31.10.2026**: https://github.com/team-ph4r0s/mpei-next/releases/tag/v0.5.2 (подписанный APK `MPEI-Hub-v0.5.2-release.apk` и неподписанный `MPEI-Hub-v0.5.2-ios-unsigned.ipa`, собран в CI по коммиту `cc8217e4`). Секреты `SIGNING_*` в GitHub добавлены владельцем; выпуск идёт через Actions → Release APK (тег и `publish = true`), `.ipa` прикладывается вручную: `gh run download <id iOS> -n ios-ipa-unsigned`, затем `gh release upload`. Смоук-тест выпуска ищет на вкладке «Карта» слова «Поиск мест» или «Спутник» (общий `MapScreen`).
 
 ## 2. Что делать дальше (по приоритету)
 

@@ -43,7 +43,7 @@ internal fun ErrorBlock(
             append("Сообщить о проблеме: ")
             withLink(
                 LinkAnnotation.Url(
-                    url = "https://github.com/ghostoftheeleven/mpei-next/issues",
+                    url = "https://github.com/team-ph4r0s/mpei-next/issues",
                     styles = TextLinkStyles(SpanStyle(MpeixTheme.palette.primary)),
                 )
             ) {

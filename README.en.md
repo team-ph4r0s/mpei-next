@@ -17,7 +17,7 @@
 
 <br/>
 
-[![CI](https://img.shields.io/github/actions/workflow/status/ghostoftheeleven/mpei-next/android.yml?branch=main&label=CI&logo=github&color=2ea44f)](https://github.com/ghostoftheeleven/mpei-next/actions)
+[![CI](https://img.shields.io/github/actions/workflow/status/team-ph4r0s/mpei-next/android.yml?branch=main&label=CI&logo=github&color=2ea44f)](https://github.com/team-ph4r0s/mpei-next/actions)
 ![Android](https://img.shields.io/badge/Android-8.0+_(API_26–36)-3DDC84?logo=android&logoColor=white)
 ![Kotlin](https://img.shields.io/badge/Kotlin-2.2_·_KMP-7F52FF?logo=kotlin&logoColor=white)
 ![Compose](https://img.shields.io/badge/Compose-Material_3-4285F4?logo=jetpackcompose&logoColor=white)
@@ -26,11 +26,11 @@
 ![Privacy](https://img.shields.io/badge/privacy-152--FZ_·_Zero_Trackers-6f42c1)
 ![Third-party SDK](https://img.shields.io/badge/third--party_SDK-0-008080)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE)
-[![Release](https://img.shields.io/github/v/release/ghostoftheeleven/mpei-next?label=Release&color=orange)](https://github.com/ghostoftheeleven/mpei-next/releases)
+[![Release](https://img.shields.io/github/v/release/team-ph4r0s/mpei-next?label=Release&color=orange)](https://github.com/team-ph4r0s/mpei-next/releases)
 
 <br/>
 
-[📥 Download Release APK](https://github.com/ghostoftheeleven/mpei-next/releases/latest) • [📖 Documentation](docs/) • [🗺️ Campus Map](#-navigation--lefortovo-campus) • [🔐 BARS Portal](#-bars-student-portal--2fa) • [🛠️ Building](#-building-and-running)
+[📥 Download Release APK](https://github.com/team-ph4r0s/mpei-next/releases/latest) • [📖 Documentation](docs/) • [🗺️ Campus Map](#-navigation--lefortovo-campus) • [🔐 BARS Portal](#-bars-student-portal--2fa) • [🛠️ Building](#-building-and-running)
 
 </div>
 
@@ -122,7 +122,7 @@ The project requires no proprietary API tokens and builds locally out-of-the-box
 
 ```bash
 # Clone repository
-git clone https://github.com/ghostoftheeleven/mpei-next.git
+git clone https://github.com/team-ph4r0s/mpei-next.git
 cd mpei-next
 
 # Build debug APK
@@ -184,6 +184,7 @@ mpei-next/
 ## 👥 Authors & Maintainers
 
 * **Rasul Rustamov** ([@ghostoftheeleven](https://github.com/ghostoftheeleven)) — Project lead, architecture & development, NRU "MPEI" student
+* **Team Ph4r0s** ([team-ph4r0s](https://github.com/team-ph4r0s)) — the organization that develops the project
 * **Johnny Wickky** ([@Johnny-Wickky](https://github.com/Johnny-Wickky)) — Co-author, NRU "MPEI" student, information security
 * **Anton Kolomeytsev** ([@tonykolomeytsev](https://github.com/tonykolomeytsev)) — Creator of the original MpeiX project
 

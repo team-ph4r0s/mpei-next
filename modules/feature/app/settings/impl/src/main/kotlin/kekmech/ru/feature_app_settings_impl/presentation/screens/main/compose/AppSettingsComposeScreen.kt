@@ -227,7 +227,7 @@ internal fun AppSettingsComposeScreen(
                 item {
                     ListItem(
                         headlineText = stringResource(Strings.app_settings_repo_title),
-                        supportingText = "github.com/ghostoftheeleven/mpei-next",
+                        supportingText = "github.com/team-ph4r0s/mpei-next",
                         modifier = Modifier.clickable {
                             onOpenGithub()
                         },

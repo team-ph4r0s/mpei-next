@@ -34,7 +34,7 @@ import kekmech.ru.ui_kit_segmented.SegmentedControl
 import kekmech.ru.ui_kit_switch.Switch
 import kekmech.ru.ui_kit_topappbar.TopAppBar
 
-private const val REPO_URL = "https://github.com/ghostoftheeleven/mpei-next"
+private const val REPO_URL = "https://github.com/team-ph4r0s/mpei-next"
 private const val ORIGINAL_REPO_URL = "https://github.com/tonykolomeytsev/mpeiapp"
 
 /**
@@ -125,7 +125,7 @@ public fun SettingsScreen(
                 )
             }
             Section("О приложении") {
-                LinkRow("Репозиторий MPEI.Hub", "github.com/ghostoftheeleven/mpei-next") { uriHandler.openUri(REPO_URL) }
+                LinkRow("Репозиторий MPEI.Hub", "github.com/team-ph4r0s/mpei-next") { uriHandler.openUri(REPO_URL) }
                 HorizontalDivider()
                 LinkRow("Завести Issue или Pull Request", "Ошибки и пожелания") { uriHandler.openUri("$REPO_URL/issues") }
                 HorizontalDivider()
