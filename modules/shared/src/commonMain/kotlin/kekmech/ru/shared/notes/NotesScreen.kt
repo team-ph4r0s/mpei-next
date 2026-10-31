@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -20,12 +19,13 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import kekmech.ru.feature_notes_shared.Note
 import kekmech.ru.feature_notes_shared.NotesController
-import kekmech.ru.shared.schedule.dayTitle
-import kekmech.ru.shared.schedule.formatTime
+import kekmech.ru.shared.NoteCard
 
 /** All the notes of the chosen schedule, the newest first; a tap opens a note for editing. */
 @Composable
@@ -50,26 +50,25 @@ public fun NotesScreen(controller: NotesController, scheduleName: String?) {
         Modifier.fillMaxSize().padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        Text("Заметки", style = MaterialTheme.typography.headlineSmall)
+        Text("Заметки", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
         when {
-            scheduleName == null -> Text("Выберите группу или преподавателя на вкладке «Расписание».")
-            notes.isEmpty() -> Text(
-                "Заметок для $scheduleName пока нет. Чтобы добавить, нажмите на пару в расписании.",
+            scheduleName == null -> EmptyNotes("Расписание не выбрано", "Выберите группу или преподавателя на вкладке «Расписание».")
+            notes.isEmpty() -> EmptyNotes(
+                "Заметок для $scheduleName пока нет",
+                "Чтобы добавить, нажмите на пару в расписании.",
             )
-            else -> LazyColumn {
-                items(notes) { note ->
-                    Column(Modifier.fillMaxWidth().clickable { editing = note }.padding(vertical = 10.dp)) {
-                        Text(note.classesName, style = MaterialTheme.typography.titleMedium)
-                        Text(
-                            "${dayTitle(note.dateTime.date)}, ${formatTime(note.dateTime.time)}",
-                            style = MaterialTheme.typography.bodySmall,
-                        )
-                        Text(NotesController.preview(note), style = MaterialTheme.typography.bodyMedium, maxLines = 3)
-                    }
-                    HorizontalDivider()
-                }
+            else -> LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                items(notes) { note -> NoteCard(note, onClick = { editing = note }) }
             }
         }
+    }
+}
+
+@Composable
+private fun EmptyNotes(title: String, subtitle: String) {
+    Column(Modifier.fillMaxWidth().padding(vertical = 24.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+        Text(title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+        Text(subtitle, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }
 

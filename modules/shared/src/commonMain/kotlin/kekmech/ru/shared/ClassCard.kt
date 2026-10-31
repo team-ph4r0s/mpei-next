@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -21,6 +20,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import kekmech.ru.feature_notes_shared.Note
 import kekmech.ru.feature_notes_shared.NotesController
 import kekmech.ru.feature_schedule_shared.Classes
@@ -50,15 +50,16 @@ internal fun ClassCard(
         border = if (highlighted) BorderStroke(1.5.dp, MaterialTheme.colorScheme.primary) else null,
     ) {
         Row(Modifier.padding(horizontal = 14.dp, vertical = 12.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            Column(Modifier.width(48.dp), horizontalAlignment = Alignment.End) {
-                Text(formatTime(classes.time.start), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            Column(Modifier.width(52.dp), horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                // the sizes are the ones of the Android card: 18sp for the start, 14sp for the end
+                Text(formatTime(classes.time.start), style = MaterialTheme.typography.titleLarge.copy(fontSize = 18.sp, fontWeight = FontWeight.Normal))
                 Text(
                     formatTime(classes.time.end),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
-            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 if (caption != null) {
                     Text(
                         caption,
@@ -67,18 +68,14 @@ internal fun ClassCard(
                     )
                 }
                 KindLine(classes)
-                Text(classes.name, style = MaterialTheme.typography.titleMedium)
+                Text(classes.name, style = MaterialTheme.typography.bodyLarge.copy(fontSize = 18.sp, lineHeight = 24.sp))
                 val place = classes.place.takeIf { it.isNotBlank() }
                 val person = classes.person.takeIf { it.isNotBlank() }
-                if (place != null || person != null) {
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        if (place != null) {
-                            Text(place, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
-                        }
-                        if (person != null) {
-                            Text(person, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        }
-                    }
+                if (place != null) {
+                    Text(place, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+                if (person != null) {
+                    Text(person, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
                 if (classes.groups.isNotBlank()) {
                     Text(classes.groups, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -96,17 +93,24 @@ internal fun ClassCard(
     }
 }
 
-/** The colored dot and the name of the kind ("Лекция"), and the number of the class. */
+/** The badge with the number of the class, the colored tag and the name of the kind ("Лекция"): the line over the name, as on Android. */
 @Composable
 private fun KindLine(classes: Classes) {
     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        if (classes.number > 0) {
+            Surface(shape = RoundedCornerShape(8.dp), color = MaterialTheme.colorScheme.background) {
+                Text(
+                    "${classes.number} пара",
+                    Modifier.padding(horizontal = 8.dp, vertical = 1.dp),
+                    style = MaterialTheme.typography.labelSmall,
+                    fontWeight = FontWeight.Bold,
+                )
+            }
+        }
         val title = typeTitle(classes.type, classes.rawType)
         if (title.isNotBlank()) {
-            Surface(Modifier.size(8.dp), shape = CircleShape, color = classes.type.color()) {}
-            Text(title.uppercase(), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        }
-        if (classes.number > 0) {
-            Text("${classes.number} пара", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Surface(Modifier.size(16.dp), shape = RoundedCornerShape(8.dp), color = classes.type.color()) {}
+            Text(title.uppercase(), style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold)
         }
     }
 }

@@ -2,6 +2,7 @@
 
 package kekmech.ru.shared
 
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
@@ -31,6 +32,7 @@ import kekmech.ru.feature_schedule_shared.RemindersController
 import kekmech.ru.feature_schedule_shared.ScheduleController
 import kekmech.ru.feature_schedule_shared.ScheduleUiState
 import kekmech.ru.feature_schedule_shared.WeekLoader
+import kekmech.ru.lib_settings.ThemeMode
 import kekmech.ru.shared.bars.BarsScreen
 import kekmech.ru.shared.dashboard.DashboardScreen
 import kekmech.ru.ui_map.MapScreen
@@ -55,7 +57,13 @@ public fun App(dependencies: AppDependencies) {
     val notesStore = dependencies.notesStore
     val map = dependencies.map
     val reminderScheduler = dependencies.reminderScheduler
-    MpeixTheme {
+    var themeMode by remember { mutableStateOf(dependencies.themeSettings.mode) }
+    val darkTheme = when (themeMode) {
+        ThemeMode.SYSTEM -> isSystemInDarkTheme()
+        ThemeMode.LIGHT -> false
+        ThemeMode.DARK -> true
+    }
+    MpeixTheme(darkTheme = darkTheme) {
         // the keyboard lifts the whole screen with the bar: the field that is typed in stays visible
         Surface(Modifier.fillMaxSize().imePadding()) {
             val scope = rememberCoroutineScope()
@@ -102,7 +110,16 @@ public fun App(dependencies: AppDependencies) {
             LaunchedEffect(barsController) { barsController.start() }
 
             if (showSettings) {
-                SettingsScreen(reminders, hasSchedule = selected != null, onBack = { showSettings = false })
+                SettingsScreen(
+                    reminders,
+                    hasSchedule = selected != null,
+                    themeMode = themeMode,
+                    onThemeChange = {
+                        themeMode = it
+                        dependencies.themeSettings.mode = it
+                    },
+                    onBack = { showSettings = false },
+                )
                 return@Surface
             }
             Scaffold(

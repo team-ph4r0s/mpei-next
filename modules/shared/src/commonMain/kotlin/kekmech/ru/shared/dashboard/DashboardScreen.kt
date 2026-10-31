@@ -41,6 +41,7 @@ import kekmech.ru.feature_schedule_shared.isLunchTime
 import kekmech.ru.feature_schedule_shared.minutesUntilStart
 import kekmech.ru.feature_schedule_shared.upcomingCaption
 import kekmech.ru.shared.ClassCard
+import kekmech.ru.shared.NoteCard
 import kekmech.ru.shared.schedule.dayTitle
 import kekmech.ru.shared.schedule.formatTime
 import kotlinx.datetime.LocalDateTime
@@ -282,25 +283,6 @@ private fun UpcomingView(upcoming: UpcomingClass, today: Boolean, note: Note?) {
         caption = if (upcoming.inProgress) "$dayLabel · идёт сейчас" else dayLabel,
         highlighted = upcoming.inProgress,
     )
-}
-
-@Composable
-private fun NoteCard(note: Note, onClick: () -> Unit) {
-    Surface(
-        Modifier.fillMaxWidth().clickable(onClick = onClick),
-        shape = RoundedCornerShape(16.dp),
-        color = MaterialTheme.colorScheme.surfaceVariant,
-    ) {
-        Column(Modifier.padding(horizontal = 14.dp, vertical = 12.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-            Text(
-                "${dayTitle(note.dateTime.date)} · ${formatTime(note.dateTime.time)}",
-                style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-            Text(note.classesName, style = MaterialTheme.typography.titleMedium)
-            Text(NotesController.preview(note), style = MaterialTheme.typography.bodyMedium, maxLines = 3)
-        }
-    }
 }
 
 @Composable

@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -20,6 +21,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -32,6 +34,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import kekmech.ru.ext_datetime.moscowDate
 import kekmech.ru.feature_notes_shared.Note
@@ -89,7 +92,7 @@ private fun SearchView(
 ) {
     Column(Modifier.fillMaxSize().padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
-            Text("Расписание", style = MaterialTheme.typography.headlineSmall)
+            Text("Расписание", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
             if (state.canCancel) TextButton(onClick = onCancel) { Text("Отмена") }
         }
         if (state.favorites.isEmpty() && state.query.isEmpty()) {
@@ -110,33 +113,42 @@ private fun SearchView(
             state.error != null -> Text(state.error.orEmpty(), color = MaterialTheme.colorScheme.error)
             state.query.trim().length >= 2 && state.results.isEmpty() -> Text("Ничего не найдено")
         }
-        LazyColumn {
+        LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
             if (state.query.trim().length < 2 && state.favorites.isNotEmpty()) {
-                item { Text("Избранное", style = MaterialTheme.typography.titleSmall) }
+                item { Text("Избранное", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold) }
                 items(state.favorites) { favorite ->
-                    Row(
-                        Modifier.fillMaxWidth().clickable { onFavorite(favorite) },
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                    ) {
-                        Text(favorite.name, style = MaterialTheme.typography.titleMedium)
+                    ResultCard(onClick = { onFavorite(favorite) }) {
+                        Text(favorite.name, Modifier.weight(1f), style = MaterialTheme.typography.titleMedium)
                         TextButton(onClick = { onRemoveFavorite(favorite) }) { Text("Убрать") }
                     }
-                    HorizontalDivider()
                 }
             }
             items(state.results) { result ->
-                Column(Modifier.fillMaxWidth().clickable { onSelect(result) }.padding(vertical = 10.dp)) {
-                    Text(result.name, style = MaterialTheme.typography.titleMedium)
-                    val kind = if (result.type == ScheduleType.GROUP) "Группа" else "Преподаватель"
-                    Text(
-                        listOf(kind, result.description).filter { it.isNotBlank() }.distinct().joinToString(" · "),
-                        style = MaterialTheme.typography.bodySmall,
-                    )
+                ResultCard(onClick = { onSelect(result) }) {
+                    Column(Modifier.weight(1f)) {
+                        Text(result.name, style = MaterialTheme.typography.titleMedium)
+                        val kind = if (result.type == ScheduleType.GROUP) "Группа" else "Преподаватель"
+                        Text(
+                            listOf(kind, result.description).filter { it.isNotBlank() }.distinct().joinToString(" · "),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
                 }
-                HorizontalDivider()
             }
         }
+    }
+}
+
+/** A row of the search: the card of the same look as the cards of the classes. */
+@Composable
+private fun ResultCard(onClick: () -> Unit, content: @Composable RowScope.() -> Unit) {
+    Surface(
+        Modifier.fillMaxWidth().clickable(onClick = onClick),
+        shape = RoundedCornerShape(12.dp),
+        color = MaterialTheme.colorScheme.surfaceVariant,
+    ) {
+        Row(Modifier.padding(horizontal = 16.dp, vertical = 10.dp), verticalAlignment = Alignment.CenterVertically, content = content)
     }
 }
 
