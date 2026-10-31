@@ -38,8 +38,8 @@
    Остаётся: часть экранов (БАРС, карта) ещё на «голом» Material3 вместо `ui_kit_*`; плашки типа занятия справа на карточке нет (на Android тоже слева, так и оставлено).
 3. **Проверка на настоящем iPhone** (нужен владелец): напоминания (разрешение, срабатывание), фоновое обновление и уведомления о заменах
    (`BGAppRefreshTask`, как запустить вручную — в `docs/IOS.md`), вход в БАРС с настоящим 2FA.
-4. **Мелкая очистка Android**: вызовы `Analytics` (~40 файлов) мёртвые, события никуда не уходят (`AnalyticsWrapper` пустой) — удалить совсем;
-   на карте на Android не проверены пинч и двойной тап (через `adb` не воспроизвести); запросы к GitHub несут `X-Device-Id` (при желании убрать).
+4. **Мелкая очистка Android — сделано 31.10.2026**: мёртвая аналитика удалена (модули `lib_analytics_*`, вызовы в 17 экранах), заголовок `X-Device-Id`
+   больше нигде не отправляется (`ClientIdentity` без `deviceId`, `DeviceIdProvider` удалён). Осталось: на карте на Android не проверены пинч и двойной тап (через `adb` не воспроизвести).
 5. **Задачи из списка** (обновлять чекбоксы по мере готовности): #11 системная кнопка «назад» / свайп назад в `NavHost`; #12 шиммер (сделан, не сверен
    визуально); #13 проверить ресурсы Compose в рантайме; #14 решение по Material3 1.4.0-beta01 (его навязывает Compose Multiplatform 1.9.3);
    #15 M3 (расписание), #16 M4, #17 M5 (карта), #18 M7 — по сути закрыты, чекбоксы обновить; #19 проверка iOS в Appetize; #20 единый сетевой клиент
@@ -96,7 +96,7 @@
 - **Заметки (M4):** `feature_notes_shared` (JSON в `KeyValueStore`; Android остаётся на Room).
 - **Карта (M5):** `feature_map_shared` (`MapMarkersRepository`, `MapController`, `WebMercator`, `MapCamera`) и `ui_map` (`MpeiMap`, `MapScreen`, `TileLoader`, `MarkerIcons`).
   **Android `MapFragment` тоже на `MapScreen`** (`osmdroid`, ELM-стор карты, шторка, `lib_emoji` удалены); поиск мест (`feature_search`) всё ещё берёт метки из старого `MapRepository`.
-  Тайлы грузит отдельный клиент `tileHttpClient` без `X-Device-Id` (на обеих платформах).
+  Тайлы грузит отдельный клиент `tileHttpClient` (на обеих платформах).
 - **БАРС (M6):** `feature_bars_shared`, `lib_bars_client`, `lib_bars_parser`; на iOS сессия в Keychain.
 - **iOS-оболочка:** `modules/shared` — `App`, `AppDependencies` (всё, из чего собрано приложение), `IosAppGraph`, экраны (`dashboard`, `schedule`, `notes`, `settings`, `bars`, `ClassCard`,
   `AppNavigationBar`), `IosReminderScheduler`, `IosChangeNotifier`, `IosBackground`; Swift: `iosApp/iosApp/` (`iOSApp.swift`, `ContentView.swift`, `BackgroundRefresh.swift`), проект генерирует XcodeGen из `iosApp/project.yml`.
@@ -122,5 +122,5 @@
 - Проверка `.ipa` на iPhone/iPad (iOS 15+, режим разработчика, отдельный Apple ID, Sideloadly, iTunes/iCloud с сайта Apple): напоминания, фон, БАРС с 2FA, тёмная тема.
 - Позиция ИВЦ МЭИ по доступу к БАРС из приложения (влияет на публикацию в сторах).
 - Apple Developer Program для TestFlight и виджета (оплата из России проблематична).
-- Решение: нужен ли виджет iOS (и в каком виде), нужно ли удалять мёртвые вызовы `Analytics` на Android.
+- Решение: нужен ли виджет iOS (и в каком виде).
 - Вне плана iOS: задачи #8 (подготовка Android к сторам; секрет `GOOGLE_SERVICES` в GitHub больше не нужен, его можно удалить) и #9 (ветка `master` нужна установленным v0.5.x).

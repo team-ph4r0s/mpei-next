@@ -38,7 +38,7 @@ internal class MapControllerTest {
             if (online) respond(answer, HttpStatusCode.OK, plainHeaders) else respond("", HttpStatusCode.ServiceUnavailable)
         }
         val repository = MapMarkersRepository(
-            client = createHttpClient(ClientIdentity("test/1.0", "device", "iOS", "ru", "0.5.2"), engine),
+            client = createHttpClient(ClientIdentity("test/1.0", "iOS", "ru", "0.5.2"), engine),
             store = store,
             baseUrl = { "https://example.org/map/" },
         )

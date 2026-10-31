@@ -14,10 +14,9 @@ import io.ktor.http.HttpHeaders
 import io.ktor.serialization.kotlinx.json.json
 import kotlinx.serialization.json.Json
 
-/** What the backend learns about the app: the same headers the Android client has always sent. */
+/** What the servers learn about the app: the name of the client, the system, the language and the version. There is no id of the device. */
 public class ClientIdentity(
     public val userAgent: String,
-    public val deviceId: String,
     public val deviceOs: String,
     public val deviceLocale: String,
     public val appVersion: String,
@@ -55,7 +54,6 @@ public fun createHttpClient(
         }
         defaultRequest {
             header(HttpHeaders.UserAgent, identity.userAgent)
-            header("X-Device-Id", identity.deviceId)
             header("X-Device-Os", identity.deviceOs)
             header("X-Device-Locale", identity.deviceLocale)
             header("X-App-Version", identity.appVersion)

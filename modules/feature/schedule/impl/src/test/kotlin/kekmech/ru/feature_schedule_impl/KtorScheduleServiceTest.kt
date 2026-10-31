@@ -46,7 +46,7 @@ class KtorScheduleServiceTest : BehaviorSpec({
             }
         }
         val api = MpeiScheduleApi(
-            client = createHttpClient(ClientIdentity("test", "id", "Android", "ru", "1"), engine),
+            client = createHttpClient(ClientIdentity("test", "Android", "ru", "1"), engine),
             baseUrl = { "https://ts.mpei.ru/api/" },
         )
         return KtorScheduleService(SharedScheduleService(api, clock))

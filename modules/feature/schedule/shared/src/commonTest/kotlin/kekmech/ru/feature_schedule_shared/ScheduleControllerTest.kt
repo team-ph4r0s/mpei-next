@@ -63,7 +63,7 @@ internal class ScheduleControllerTest {
             }
         }
         val api = MpeiScheduleApi(
-            client = createHttpClient(ClientIdentity("test/1.0", "device", "iOS", "ru", "0.5.2"), engine),
+            client = createHttpClient(ClientIdentity("test/1.0", "iOS", "ru", "0.5.2"), engine),
             baseUrl = { "https://ts.mpei.ru/api/" },
         )
         return ScheduleController(
