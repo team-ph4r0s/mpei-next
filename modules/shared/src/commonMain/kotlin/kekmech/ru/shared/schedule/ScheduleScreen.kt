@@ -240,7 +240,12 @@ private fun DaysList(week: Week?, notes: List<Note>, onEditNote: (NoteTarget) ->
         ) {
             item { Text(dayTitle(day.date), style = MaterialTheme.typography.titleMedium) }
             if (day.classes.isEmpty()) {
-                item { Text("Занятий нет", style = MaterialTheme.typography.bodyMedium) }
+                item {
+                    Column(Modifier.fillMaxWidth().padding(vertical = 24.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text("Занятий нет", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                        Text("Можно отдохнуть", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                }
             }
             items(day.classes) { classes ->
                 val dateTime = LocalDateTime(day.date, classes.time.start)
@@ -277,7 +282,7 @@ private fun weekTitle(state: ScheduleUiState.Week): String {
         else -> "Неделя ${if (state.weekOffset > 0) "+" else ""}${state.weekOffset}"
     }
     return when (val number = week.weekOfSemester) {
-        is WeekOfSemester.Studying -> "${number.num} неделя"
+        is WeekOfSemester.Studying -> "${number.num}-я неделя"
         WeekOfSemester.NonStudying -> "Каникулы / сессия"
     }
 }
