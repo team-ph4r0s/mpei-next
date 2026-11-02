@@ -22,6 +22,7 @@ import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -31,6 +32,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.unit.dp
 import kekmech.ru.feature_map_shared.APPEARANCE_HYBRID
 import kekmech.ru.feature_map_shared.APPEARANCE_SCHEME
@@ -60,79 +62,85 @@ public fun MapScreen(
     LaunchedEffect(controller) { controller.start() }
     val appearance = MapAppearance.fromCode(state.appearance)
     val visible = state.visible
+    // the theme of the app, not of the system: the app can be dark on a light phone
+    val dark = MaterialTheme.colorScheme.background.luminance() < 0.5f
 
-    Column(modifier.fillMaxSize().windowInsetsPadding(insets)) {
-        Row(
-            Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            OutlinedTextField(
-                value = state.query,
-                onValueChange = controller::setQuery,
-                label = { Text("Поиск мест") },
-                singleLine = true,
-                modifier = Modifier.weight(1f),
-            )
-            TextButton(onClick = {
-                val next = if (appearance == MapAppearance.SCHEME) APPEARANCE_HYBRID else APPEARANCE_SCHEME
-                controller.setAppearance(next)
-                onEvent(MapScreenEvent.AppearanceChanged(next))
-            }) { Text(if (appearance == MapAppearance.SCHEME) "Спутник" else "Схема") }
-        }
-        LazyRow(
-            contentPadding = PaddingValues(horizontal = 16.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            items(MapTabs) { tab ->
-                FilterChip(
-                    selected = state.query.isBlank() && state.tab == tab,
-                    onClick = {
-                        controller.selectTab(tab)
-                        onEvent(MapScreenEvent.TabSelected(tab))
-                    },
-                    label = { Text(tab.title()) },
+    // the Surface gives the texts the colour of the theme: without it they are black on the dark background
+    Surface(modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
+        Column(Modifier.fillMaxSize().windowInsetsPadding(insets)) {
+            Row(
+                Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                OutlinedTextField(
+                    value = state.query,
+                    onValueChange = controller::setQuery,
+                    label = { Text("Поиск мест") },
+                    singleLine = true,
+                    modifier = Modifier.weight(1f),
                 )
+                TextButton(onClick = {
+                    val next = if (appearance == MapAppearance.SCHEME) APPEARANCE_HYBRID else APPEARANCE_SCHEME
+                    controller.setAppearance(next)
+                    onEvent(MapScreenEvent.AppearanceChanged(next))
+                }) { Text(if (appearance == MapAppearance.SCHEME) "Спутник" else "Схема") }
             }
-        }
-        Box(Modifier.weight(1f).fillMaxWidth().padding(top = 8.dp)) {
-            MpeiMap(
-                state = mapState,
-                markers = visible,
-                selected = state.selected,
-                appearance = appearance,
-                tileLoader = tileLoader,
-                onMarkerClick = controller::select,
-                modifier = Modifier.fillMaxSize(),
-            )
-            when {
-                state.loading -> CircularProgressIndicator(Modifier.align(Alignment.Center))
-                state.error != null -> Column(
-                    Modifier.align(Alignment.Center).background(MaterialTheme.colorScheme.surface).padding(16.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
-                ) {
-                    Text(state.error.orEmpty(), color = MaterialTheme.colorScheme.error)
-                    Button(onClick = {
-                        controller.reload()
-                        onEvent(MapScreenEvent.Reload)
-                    }) { Text("Повторить") }
+            LazyRow(
+                contentPadding = PaddingValues(horizontal = 16.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                items(MapTabs) { tab ->
+                    FilterChip(
+                        selected = state.query.isBlank() && state.tab == tab,
+                        onClick = {
+                            controller.selectTab(tab)
+                            onEvent(MapScreenEvent.TabSelected(tab))
+                        },
+                        label = { Text(tab.title()) },
+                    )
                 }
-                state.offline -> Text(
-                    "Нет сети, места из сохранённой копии",
-                    style = MaterialTheme.typography.bodySmall,
-                    modifier = Modifier.align(Alignment.TopCenter).background(MaterialTheme.colorScheme.surface).padding(4.dp),
-                )
             }
+            Box(Modifier.weight(1f).fillMaxWidth().padding(top = 8.dp)) {
+                MpeiMap(
+                    state = mapState,
+                    markers = visible,
+                    selected = state.selected,
+                    appearance = appearance,
+                    tileLoader = tileLoader,
+                    onMarkerClick = controller::select,
+                    modifier = Modifier.fillMaxSize(),
+                    dark = dark,
+                )
+                when {
+                    state.loading -> CircularProgressIndicator(Modifier.align(Alignment.Center))
+                    state.error != null -> Column(
+                        Modifier.align(Alignment.Center).background(MaterialTheme.colorScheme.surface).padding(16.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
+                        Text(state.error.orEmpty(), color = MaterialTheme.colorScheme.error)
+                        Button(onClick = {
+                            controller.reload()
+                            onEvent(MapScreenEvent.Reload)
+                        }) { Text("Повторить") }
+                    }
+                    state.offline -> Text(
+                        "Нет сети, места из сохранённой копии",
+                        style = MaterialTheme.typography.bodySmall,
+                        modifier = Modifier.align(Alignment.TopCenter).background(MaterialTheme.colorScheme.surface).padding(4.dp),
+                    )
+                }
+            }
+            PlacesList(
+                places = visible,
+                selected = state.selected,
+                onClick = { place ->
+                    controller.select(place, focus = true)
+                    onEvent(MapScreenEvent.PlaceSelected(place))
+                },
+            )
         }
-        PlacesList(
-            places = visible,
-            selected = state.selected,
-            onClick = { place ->
-                controller.select(place, focus = true)
-                onEvent(MapScreenEvent.PlaceSelected(place))
-            },
-        )
     }
 }
 

@@ -23,6 +23,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.ColorMatrix
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.graphics.drawscope.withTransform
@@ -59,6 +60,22 @@ private const val TAP_RADIUS_DP = 28
 private const val MAX_PARENT_LEVELS = 4
 private const val LN_2 = 0.6931471805599453
 private val BACKGROUND = Color(0xFFE5E3DF)
+private val DARK_BACKGROUND = Color(0xFF1E1F22)
+
+// the scheme at night: the colours are inverted and the hue is turned by 180°, so the light streets go dark while the
+// water stays blue and the parks stay green; then it is a bit dimmed, so the white of the labels does not glare
+private const val DARK_SCALE = 0.82f
+private const val DARK_LIFT = 14f
+private val DARK_TILES = ColorFilter.colorMatrix(
+    ColorMatrix(
+        floatArrayOf(
+            0.574f * DARK_SCALE, -1.430f * DARK_SCALE, -0.144f * DARK_SCALE, 0f, 255f * DARK_SCALE + DARK_LIFT,
+            -0.426f * DARK_SCALE, -0.430f * DARK_SCALE, -0.144f * DARK_SCALE, 0f, 255f * DARK_SCALE + DARK_LIFT,
+            -0.426f * DARK_SCALE, -1.430f * DARK_SCALE, 0.856f * DARK_SCALE, 0f, 255f * DARK_SCALE + DARK_LIFT,
+            0f, 0f, 0f, 1f, 0f,
+        ),
+    ),
+)
 
 /**
  * The map of the campus: the tiles of [appearance] and the [markers] on them. One finger drags the map, two fingers
@@ -66,6 +83,7 @@ private val BACKGROUND = Color(0xFFE5E3DF)
  * place calls it with `null`).
  *
  * @param selected the marker that is drawn bigger and with its name
+ * @param dark the dark theme: the street scheme is drawn in the night colours (the satellite is left as it is)
  */
 @Composable
 public fun MpeiMap(
@@ -76,11 +94,13 @@ public fun MpeiMap(
     tileLoader: TileLoader,
     onMarkerClick: (MapMarker?) -> Unit,
     modifier: Modifier = Modifier,
+    dark: Boolean = false,
 ) {
+    val tileFilter = if (dark && appearance == MapAppearance.SCHEME) DARK_TILES else null
     var size by remember { mutableStateOf(IntSize.Zero) }
     val textMeasurer = rememberTextMeasurer()
     val icons = rememberMarkerIcons()
-    Box(modifier.clipToBounds().background(BACKGROUND).onSizeChanged { size = it }) {
+    Box(modifier.clipToBounds().background(if (dark) DARK_BACKGROUND else BACKGROUND).onSizeChanged { size = it }) {
         Canvas(
             Modifier
                 .fillMaxSize()
@@ -126,7 +146,7 @@ public fun MpeiMap(
         ) {
             val camera = state.camera
             for (layer in appearance.layers) {
-                drawLayer(layer, camera, tileLoader)
+                drawLayer(layer, camera, tileLoader, tileFilter)
             }
             drawMarkers(markers, selected, camera, icons, textMeasurer)
         }
@@ -135,38 +155,39 @@ public fun MpeiMap(
             style = MaterialTheme.typography.labelSmall,
             modifier = Modifier
                 .align(Alignment.BottomEnd)
-                .background(Color.White.copy(alpha = 0.7f))
+                .background((if (dark) Color.Black else Color.White).copy(alpha = 0.6f))
                 .padding(horizontal = 4.dp, vertical = 2.dp),
-            color = Color.Black,
+            color = if (dark) Color.White else Color.Black,
         )
     }
 }
 
-private fun DrawScope.drawLayer(layer: TileLayer, camera: MapCamera, loader: TileLoader) {
+private fun DrawScope.drawLayer(layer: TileLayer, camera: MapCamera, loader: TileLoader, filter: ColorFilter?) {
     val tiles = WebMercator.visibleTiles(camera.center, camera.zoom, size.width, size.height, layer.maxLevel)
     for (tile in tiles) {
         val bitmap = loader.get(layer, tile.id)
         if (bitmap != null) {
-            drawTile(bitmap, tile)
+            drawTile(bitmap, tile, filter)
         } else {
-            drawCoarserTile(layer, tile, loader)
+            drawCoarserTile(layer, tile, loader, filter)
         }
     }
 }
 
 /** The tile is drawn on whole pixels: the neighbours touch each other and there is no seam between them. */
-private fun DrawScope.drawTile(bitmap: androidx.compose.ui.graphics.ImageBitmap, tile: PlacedTile) {
+private fun DrawScope.drawTile(bitmap: androidx.compose.ui.graphics.ImageBitmap, tile: PlacedTile, filter: ColorFilter?) {
     val left = tile.left.roundToInt()
     val top = tile.top.roundToInt()
     drawImage(
         image = bitmap,
         dstOffset = IntOffset(left, top),
         dstSize = IntSize((tile.left + tile.size).roundToInt() - left, (tile.top + tile.size).roundToInt() - top),
+        colorFilter = filter,
     )
 }
 
 /** While the tile loads, the part of a tile of a lower level that covers it is drawn, blurry but in its place. */
-private fun DrawScope.drawCoarserTile(layer: TileLayer, tile: PlacedTile, loader: TileLoader) {
+private fun DrawScope.drawCoarserTile(layer: TileLayer, tile: PlacedTile, loader: TileLoader, filter: ColorFilter?) {
     val id = tile.id
     for (levels in 1..MAX_PARENT_LEVELS) {
         if (id.z - levels < 0) return
@@ -182,6 +203,7 @@ private fun DrawScope.drawCoarserTile(layer: TileLayer, tile: PlacedTile, loader
             srcSize = IntSize(part, part),
             dstOffset = IntOffset(left, top),
             dstSize = IntSize(ceil(tile.size.toDouble()).toInt(), ceil(tile.size.toDouble()).toInt()),
+            colorFilter = filter,
         )
         return
     }

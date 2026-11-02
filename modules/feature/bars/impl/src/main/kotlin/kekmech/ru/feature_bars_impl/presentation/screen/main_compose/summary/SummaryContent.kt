@@ -11,6 +11,8 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -110,6 +112,7 @@ internal fun summaryKey(index: Int, name: String): String = "summary_${index}_$n
 internal fun Modifier.cardModifier(): Modifier =
     padding(horizontal = 8.dp).padding(bottom = 8.dp)
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 internal fun SummaryDisciplineCard(
     discipline: SummaryDisciplineUi,
@@ -163,13 +166,17 @@ internal fun SummaryDisciplineCard(
                         .rotate(chevronRotation),
                 )
             }
-            Row(
+            // a wrapping row: the chips and the progress of КМ do not fit one line on a phone, and a plain Row squeezes
+            // the last of them into a one-letter column
+            FlowRow(
                 horizontalArrangement = Arrangement.spacedBy(6.dp),
-                verticalAlignment = Alignment.CenterVertically,
+                verticalArrangement = Arrangement.spacedBy(6.dp),
+                itemVerticalAlignment = Alignment.CenterVertically,
             ) {
                 discipline.scores.forEach { score ->
                     Chip(
-                        text = "${score.label}: ${score.value}",
+                        // BARS writes some labels with a colon of their own ("Балл текущего контроля:")
+                        text = "${score.label.trimEnd().trimEnd(':')}: ${score.value}",
                         contentColor = MpeixTheme.palette.content,
                         containerColor = MpeixTheme.palette.surfacePlus3,
                     )
