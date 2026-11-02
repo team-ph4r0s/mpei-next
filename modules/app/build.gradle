@@ -10,8 +10,8 @@ android {
 
     defaultConfig {
         applicationId = "ru.mpei.hub"
-        versionName = "v0.5.3"
-        versionCode = 65
+        versionName = "v0.5.4"
+        versionCode = 66
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         ndk {
             abiFilters("armeabi-v7a", "arm64-v8a", "x86", "x86_64")
