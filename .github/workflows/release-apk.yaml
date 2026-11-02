@@ -1,6 +1,7 @@
 name: Release APK
 
-# Builds the signed release APK and publishes it to GitHub Releases.
+# Builds the signed release APK and the unsigned iOS .ipa (ios.yaml) and publishes both to GitHub Releases.
+# The release is published only when both platforms are built: every version has the APK and the .ipa.
 #  - push of a tag `vX.Y.Z`  -> build + publish the release for that tag
 #  - manual run (Actions -> Release APK -> Run workflow):
 #      publish = false  -> only build and check (unit tests + APK artifact)
@@ -186,10 +187,16 @@ jobs:
           path: smoke-output/
           if-no-files-found: ignore
 
+  # the unsigned .ipa: the same build as the iOS workflow (macOS runner, ~25 min), only for a release that is published
+  ios:
+    name: iOS .ipa
+    if: startsWith(github.ref, 'refs/tags/v') || (github.event_name == 'workflow_dispatch' && inputs.publish && inputs.tag != '')
+    uses: ./.github/workflows/ios.yaml
+
   publish:
     name: Publish GitHub Release
     runs-on: ubuntu-latest
-    needs: [build, smoke-test]
+    needs: [build, smoke-test, ios]
     if: startsWith(github.ref, 'refs/tags/v') || (github.event_name == 'workflow_dispatch' && inputs.publish && inputs.tag != '')
     permissions:
       contents: write
@@ -202,6 +209,12 @@ jobs:
           name: release-apk
           path: dist
 
+      - name: Download .ipa
+        uses: actions/download-artifact@v4
+        with:
+          name: ios-ipa-unsigned
+          path: ipa
+
       - name: Resolve tag
         id: tag
         run: |
@@ -210,6 +223,10 @@ jobs:
           else
             echo "name=${GITHUB_REF_NAME}" >> "$GITHUB_OUTPUT"
           fi
+
+      # the name of the .ipa carries the version, as the name of the APK does: MPEI-Hub-v0.5.4-ios-unsigned.ipa
+      - name: Name the .ipa
+        run: mv ipa/MPEI-Hub-ios-unsigned.ipa "dist/MPEI-Hub-${{ steps.tag.outputs.name }}-ios-unsigned.ipa"
 
       - name: Publish release
         uses: softprops/action-gh-release@v2
@@ -222,4 +239,6 @@ jobs:
           prerelease: false
           make_latest: true
           fail_on_unmatched_files: true
-          files: dist/*.apk
+          files: |
+            dist/*.apk
+            dist/*.ipa

@@ -70,12 +70,14 @@ Workflow `.github/workflows/release-apk.yaml`:
 4. Проверка подписи APK (`apksigner`) и AAB (`jarsigner`); при настоящем ключе — сверка SHA-256 сертификата с таблицей выше.
 5. Артефакты: `release-apk` (APK) и `release-aab` (AAB для Google Play и RuStore).
 6. Смоук-тест на эмуляторе (светлая и тёмная темы, обход вкладок).
-7. Публикация GitHub Release (только для тега `vX.Y.Z` или ручного запуска с `publish = true` и тегом).
+7. Неподписанный `.ipa` для iOS: тот же workflow `iOS` (`ios.yaml`, вызывается через `workflow_call`, macOS-раннер, ~25 мин). Только для публикуемого релиза.
+8. Публикация GitHub Release (только для тега `vX.Y.Z` или ручного запуска с `publish = true` и тегом): APK и `MPEI-Hub-vX.Y.Z-ios-unsigned.ipa`.
+   Релиз выходит, только если собрались обе платформы; если упал iOS, не публикуется и Android: исправить и перезапустить.
 
 Запуск:
 
 - **Проверка без публикации:** Actions → Release APK → Run workflow → `publish = false`.
-- **Релиз:** поднять `versionName`/`versionCode` в `modules/app/build.gradle`, обновить `.github/release-notes.md`, создать тег `vX.Y.Z`.
+- **Релиз:** поднять `versionName`/`versionCode` в `modules/app/build.gradle` и `MARKETING_VERSION`/`CURRENT_PROJECT_VERSION` в `iosApp/project.yml` (и `APP_VERSION` в `IosAppGraph.kt`), обновить `.github/release-notes.md`, создать тег `vX.Y.Z`.
 
 ## Публикация заранее подписанного APK (`Publish signed release`)
 

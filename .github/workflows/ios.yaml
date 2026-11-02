@@ -4,9 +4,11 @@ name: iOS
 # The .ipa is signed later on the PC with a free Apple ID (Sideloadly/AltStore), or by a signing step
 # once an Apple Developer account exists (TestFlight / App Store).
 # Install: see docs/IOS.md.
+# The release (release-apk.yaml) calls this workflow too (workflow_call) and attaches the .ipa to the GitHub Release.
 
 on:
   workflow_dispatch:
+  workflow_call:
   push:
     branches:
       - main
