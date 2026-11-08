@@ -8,6 +8,9 @@ android.buildFeatures{
 }
 
 dependencies {
+    testImplementation(libs.kotest.assertions)
+    testImplementation(libs.kotest.runner)
+
     implementation(libs.androidx.appCompat)
     implementation(libs.androidx.constraintLayout)
     implementation(libs.androidx.coreKtx)

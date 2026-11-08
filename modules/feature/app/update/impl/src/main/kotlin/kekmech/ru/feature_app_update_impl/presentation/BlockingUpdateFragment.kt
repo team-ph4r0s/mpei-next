@@ -30,7 +30,7 @@ class BlockingUpdateFragment : Fragment(R.layout.fragment_blocking_update) {
                 close()
             }
             buttonUpdateNow.setOnClickListener {
-                requireContext().openLinkExternal(updateInfo.updateUrl)
+                requireContext().openAppInMarket(updateInfo.updateUrl)
             }
             header.setText(Strings.blocking_update_title)
             fullText.setText(Strings.blocking_update_description)

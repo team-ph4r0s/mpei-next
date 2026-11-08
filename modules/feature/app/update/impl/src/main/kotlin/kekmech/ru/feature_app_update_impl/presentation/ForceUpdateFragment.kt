@@ -1,7 +1,5 @@
 package kekmech.ru.feature_app_update_impl.presentation
 
-import android.content.Intent
-import android.net.Uri
 import android.os.Bundle
 import android.view.View
 import kekmech.ru.ext_android.close
@@ -25,7 +23,7 @@ internal class ForceUpdateFragment : BottomSheetDialogFragment(R.layout.fragment
         super.onViewCreated(view, savedInstanceState)
         viewBinding.apply {
             buttonUpdateNow.setOnClickListener {
-                startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(forceUpdateInfo.updateUrl)))
+                requireContext().openAppInMarket(forceUpdateInfo.updateUrl)
             }
             buttonUpdateLater.setOnClickListener {
                 close()
