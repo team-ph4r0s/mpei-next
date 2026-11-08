@@ -7,8 +7,8 @@ name: Release APK
 #      publish = false  -> only build and check (unit tests + APK artifact)
 #      publish = true   -> build and publish the release for `tag`
 #
-# The signing key is NEVER stored in the repository. For a signed build add the repository secrets
-# (Settings -> Secrets and variables -> Actions):
+# The signing key is NEVER stored in the repository. For a signed build add the secrets of the environment `release`
+# (Settings -> Environments -> release -> Environment secrets):
 #   SIGNING_KEYSTORE_BASE64  the keystore file encoded with base64
 #   SIGNING_STORE_PASSWORD, SIGNING_KEY_ALIAS, SIGNING_KEY_PASSWORD
 # Without them the APK is signed with a throwaway key; such an APK can be built and tested,
@@ -37,6 +37,8 @@ jobs:
     name: Build, test, sign
     runs-on: ubuntu-latest
     timeout-minutes: 60
+    # the signing key and MAP_KEY are secrets of this environment, not of the repository
+    environment: release
     outputs:
       apk_name: ${{ steps.apk.outputs.apk_name }}
     steps:

@@ -43,7 +43,7 @@
 
 ## Секреты GitHub Actions
 
-Репозиторий → Settings → Secrets and variables → Actions → New repository secret:
+Репозиторий → Settings → Environments → `release` → Environment secrets (job `Build, test, sign` работает в этом environment):
 
 | Секрет | Значение |
 |---|---|
