@@ -207,7 +207,7 @@ internal class BarsLoginActor(
             )
 
             is Command.Exit -> actorFlow {
-                barsRepository.twoFactorPage = null
+                barsRepository.abandonSignIn()
                 withContext(Dispatchers.Main) {
                     router.executeCommand(PopBackStack())
                 }

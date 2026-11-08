@@ -12,6 +12,10 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
@@ -41,8 +45,7 @@ internal fun AppSettingsComposeScreen(
     onOpenScheduleNotifications: () -> Unit,
     notificationSettings: ScheduleNotificationSettings,
     onOpenGithub: () -> Unit,
-    onOpenContributor: (String) -> Unit,
-    onLogoutBars: () -> Unit,
+    onOpenLink: (String) -> Unit,
     onOpenLanguageSelection: (String) -> Unit,
     onOpenMapTypeSelection: (String) -> Unit,
     onRecreateActivity: () -> Unit,
@@ -56,6 +59,17 @@ internal fun AppSettingsComposeScreen(
                 is AppSettingsEffect.OpenMapTypeDialog -> onOpenMapTypeSelection(effect.mapType)
             }
         }
+    }
+
+    var isBarsLogoutDialogVisible by rememberSaveable { mutableStateOf(false) }
+    if (isBarsLogoutDialogVisible) {
+        BarsLogoutDialog(
+            onConfirm = {
+                isBarsLogoutDialogVisible = false
+                onAccept(Ui.Action.LogoutBars)
+            },
+            onDismiss = { isBarsLogoutDialogVisible = false },
+        )
     }
 
     Scaffold(
@@ -206,23 +220,29 @@ internal fun AppSettingsComposeScreen(
                     )
                 }
 
-                // Section 4: BARS
-                item {
-                    SettingsSectionHeader(title = stringResource(Strings.app_settings_header_bars))
-                }
-                item {
-                    ListItem(
-                        headlineText = "Выйти из аккаунта",
-                        supportingText = "Нажмите чтобы завершить сессию в БАРС",
-                        modifier = Modifier.clickable {
-                            onLogoutBars()
-                        },
-                    )
+                // Section 4: BARS, only while the student is signed in
+                if (state.isBarsSignedIn) {
+                    item {
+                        SettingsSectionHeader(title = stringResource(Strings.app_settings_header_bars))
+                    }
+                    item {
+                        ListItem(
+                            headlineText = stringResource(Strings.app_settings_bars_logout_title),
+                            supportingText = stringResource(Strings.app_settings_bars_logout_description),
+                            modifier = Modifier.clickable { isBarsLogoutDialogVisible = true },
+                        )
+                    }
                 }
 
                 // Section 5: Support & Fork
                 item {
                     SettingsSectionHeader(title = stringResource(Strings.app_settings_header_support))
+                }
+                item {
+                    SupportCoffeeCard(
+                        onOpen = onOpenLink,
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
+                    )
                 }
                 item {
                     ListItem(
@@ -238,14 +258,14 @@ internal fun AppSettingsComposeScreen(
                         headlineText = stringResource(Strings.app_settings_original_repo_title),
                         supportingText = "Форк от github.com/tonykolomeytsev/mpeiapp",
                         modifier = Modifier.clickable {
-                            onOpenContributor("https://github.com/tonykolomeytsev/mpeiapp")
+                            onOpenLink("https://github.com/tonykolomeytsev/mpeiapp")
                         },
                     )
                 }
 
                 // Section 6: Developers
                 item {
-                    DevelopersSection(onOpenProfile = onOpenContributor)
+                    DevelopersSection(onOpenProfile = onOpenLink)
                 }
 
                 // Version

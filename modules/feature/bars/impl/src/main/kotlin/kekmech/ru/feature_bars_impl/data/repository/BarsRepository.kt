@@ -4,7 +4,7 @@ import android.os.Parcelable
 import com.tencent.mmkv.MMKV
 import kekmech.ru.ext_kotlin.fromBase64
 import kekmech.ru.ext_kotlin.toBase64
-import kekmech.ru.feature_bars_api.BarsLogoutHandle
+import kekmech.ru.feature_bars_api.BarsSessionHandle
 import kekmech.ru.feature_bars_impl.data.network.KeystoreBarsSessionStore
 import kekmech.ru.feature_bars_impl.domain.AssessedDiscipline
 import kekmech.ru.feature_bars_impl.presentation.screen.login.elm.Account
@@ -14,14 +14,17 @@ import kekmech.ru.lib_bars_parser.BarsTwoFactorPage
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.parcelize.Parcelize
 
 internal class BarsRepository(
     val api: BarsApi,
     private val sessionStore: KeystoreBarsSessionStore,
-) : BarsLogoutHandle {
+) : BarsSessionHandle {
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
@@ -40,6 +43,11 @@ internal class BarsRepository(
     init {
         loginStateTrigger.tryEmit(Unit)
     }
+
+    /** An account is signed in from the moment the student is chosen until the sign-out or the end of the session. */
+    override val isSignedIn: Flow<Boolean> = loginStateTrigger
+        .map { getCurrentAccount() != null }
+        .distinctUntilChanged()
 
     fun saveCurrentUserId(id: String) {
         storage.encode("current_user_id", id)
@@ -99,19 +107,28 @@ internal class BarsRepository(
         loginStateTrigger.tryEmit(Unit)
     }
 
-    override fun logout(): Boolean {
+    override fun logout() {
         // The session is erased here and now, the portal is told in the background
         sessionStore.clearNow()
+        forgetSignInInProgress()
+        scope.launch { runCatching { api.logout() } }
+        // Everything the app knows about the accounts: the chosen student, the list of them, the cached marks
+        storage.clearAll()
+        loginStateTrigger.tryEmit(Unit)
+    }
+
+    /**
+     * The student has left the sign-in before it was finished: the session that the portal has already given must not stay
+     * on the device without an account to which it belongs.
+     */
+    fun abandonSignIn() {
+        forgetSignInInProgress()
+        if (getCurrentAccount() == null) sessionStore.clearNow()
+    }
+
+    private fun forgetSignInInProgress() {
         twoFactorPage = null
         students = emptyList()
-        scope.launch { runCatching { api.logout() } }
-        val currentId = storage.decodeString("current_user_id") ?: return false
-        storage.removeValueForKey("current_user_id")
-        storage.removeValueForKey("user-$currentId")
-        storage.removeValueForKey(disciplinesKey(currentId))
-        storage.removeValueForKey(legacyDisciplinesKey(currentId))
-        loginStateTrigger.tryEmit(Unit)
-        return true
     }
 
     private fun disciplinesKey(userId: String) = "user-$userId-disciplines-v2"

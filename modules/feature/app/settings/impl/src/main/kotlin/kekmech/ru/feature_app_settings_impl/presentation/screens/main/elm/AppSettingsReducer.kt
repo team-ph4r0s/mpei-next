@@ -17,6 +17,7 @@ internal class AppSettingsReducer :
     override fun Result.internal(event: Internal) {
         when (event) {
             is Internal.LoadAppSettingsSuccess -> state { copy(appSettings = event.appSettings) }
+            is Internal.BarsSignInChanged -> state { copy(isBarsSignedIn = event.isSignedIn) }
         }
     }
 
@@ -24,6 +25,7 @@ internal class AppSettingsReducer :
         when (event) {
             is Ui.Init -> commands {
                 +Command.LoadAppSettings
+                +Command.ObserveBarsSignIn
             }
 
             is Ui.Action.SetDarkThemeEnabled -> {
@@ -56,6 +58,8 @@ internal class AppSettingsReducer :
             is Ui.Action.LanguageChanged -> commands { +Command.ChangeLanguage(event.selectedLanguage) }
 
             is Ui.Action.MapTypeChanged -> commands { +Command.ChangeMapType(event.selectedMapType) }
+
+            is Ui.Action.LogoutBars -> commands { +Command.LogoutBars }
 
             is Ui.Action.SetShowQuickNavigationFab -> commands {
                 +Command.SetShowQuickNavigationFab(event.isVisible)

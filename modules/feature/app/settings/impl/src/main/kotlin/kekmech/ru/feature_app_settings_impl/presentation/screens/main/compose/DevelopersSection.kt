@@ -28,29 +28,25 @@ import kekmech.ru.ui_theme.theme.MpeixTheme
 /** A person of the team: exactly the people from [Developers] are shown in the settings. */
 internal data class Developer(
     @StringRes val nameRes: Int,
-    @StringRes val roleRes: Int,
     val url: String,
 )
 
 internal val Developers = listOf(
     Developer(
         nameRes = Strings.developer_rasul_rustamov_name,
-        roleRes = Strings.contributor_rasul_rustamov_bio,
         url = "https://github.com/ghostoftheeleven",
     ),
     Developer(
         nameRes = Strings.developer_ivan_myalitsin_name,
-        roleRes = Strings.developer_ivan_myalitsin_role,
         url = "https://github.com/bezpaniki-arch",
     ),
     Developer(
         nameRes = Strings.developer_johnny_wickky_name,
-        roleRes = Strings.contributor_johnny_wickky_bio,
         url = "https://github.com/Johnny-Wickky",
     ),
 )
 
-/** "Developers" section: three cards of the same size and the same look. */
+/** "Developers" section: three cards of the same size and the same look, with the same role under each name. */
 @Composable
 internal fun DevelopersSection(
     onOpenProfile: (String) -> Unit,
@@ -112,7 +108,7 @@ private fun DeveloperCard(
                     color = MpeixTheme.palette.content,
                 )
                 Text(
-                    text = stringResource(developer.roleRes),
+                    text = stringResource(Strings.developer_role),
                     style = MpeixTheme.typography.paragraphNormal,
                     color = MpeixTheme.palette.contentVariant,
                     modifier = Modifier.padding(top = 2.dp),

@@ -2,7 +2,7 @@ package kekmech.ru.feature_bars_impl.di
 
 import io.ktor.client.engine.HttpClientEngine
 import kekmech.ru.feature_bars_api.BarsFeatureLauncher
-import kekmech.ru.feature_bars_api.BarsLogoutHandle
+import kekmech.ru.feature_bars_api.BarsSessionHandle
 import kekmech.ru.feature_bars_impl.data.network.KeystoreBarsSessionStore
 import kekmech.ru.feature_bars_impl.data.repository.BarsRepository
 import kekmech.ru.feature_bars_impl.launcher.BarsFeatureLauncherImpl
@@ -26,7 +26,7 @@ val FeatureBarsModule = module {
     singleOf(::BarsLoginStoreFactory)
     factoryOf(::BarsFeatureLauncherImpl) bind BarsFeatureLauncher::class
 
-    singleOf(::BarsRepository) binds arrayOf(BarsRepository::class, BarsLogoutHandle::class)
+    singleOf(::BarsRepository) binds arrayOf(BarsRepository::class, BarsSessionHandle::class)
 
     single { KeystoreBarsSessionStore(androidApplication()) }
     // The client of the portal sends through the engine of the app, so Chucker sees it in the debug builds

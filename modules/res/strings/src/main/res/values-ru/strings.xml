@@ -240,6 +240,15 @@
     <string name="app_settings_favorite_schedule_description">Настройка быстрого доступа к расписаниям</string>
     <string name="app_settings_header_bars">БАРС</string>
     <string name="app_settings_header_support">Поддержка</string>
+    <string name="app_settings_bars_logout_title">Выйти из аккаунта</string>
+    <string name="app_settings_bars_logout_description">Завершить сессию в БАРС</string>
+    <string name="app_settings_bars_logout_dialog_title">Выйти из БАРС?</string>
+    <string name="app_settings_bars_logout_dialog_text">Сессия будет завершена, а данные БАРС, сохранённые на устройстве, удалены. Чтобы снова увидеть оценки, нужно будет войти заново.</string>
+    <string name="app_settings_bars_logout_confirm">Выйти</string>
+    <string name="app_settings_bars_logout_cancel">Отмена</string>
+    <string name="support_coffee_title">Угостите разработчиков кофе ☕</string>
+    <string name="support_coffee_text">МЭИ.Хаб делают студенты МЭИ между парами, лабами и дедлайнами. Чашка кофе — и в приложении станет ещё больше полезного.</string>
+    <string name="support_coffee_action">Поддержать на Lava.top</string>
     <string name="app_settings_section_ask">Задать вопрос в группу</string>
     <string name="app_settings_section_github">Завести Issue или Pull Request</string>
     <string name="app_settings_header_developers">Разработчики</string>
@@ -250,8 +259,6 @@
     <string name="app_settings_original_repo_title">Оригинальный проект (MpeiX)</string>
     <string name="about_project_title">О проекте МЭИ.Хаб</string>
     <string name="about_project_subtitle">МЭИ.Хаб — Новое поколение</string>
-    <string name="contributor_rasul_rustamov_bio">Разработчик МЭИ.Хаб • студент МЭИ</string>
-    <string name="contributor_johnny_wickky_bio">Студент МЭИ, ИБ-энтузиаст</string>
 
     <string name="favorites_screen_title">Избранные расписания</string>
     <string name="favorites_empty_state_title">Ни одно расписание не добавлено в избранные</string>
@@ -419,8 +426,8 @@
     <string name="app_settings_notify_more_description">Время напоминаний, частота проверки, разрешения</string>
     <string name="developer_rasul_rustamov_name">Расул Рустамов</string>
     <string name="developer_ivan_myalitsin_name">Мялицин Иван</string>
-    <string name="developer_ivan_myalitsin_role">Разработчик, студент МЭИ</string>
     <string name="developer_johnny_wickky_name">Johnny Wickky</string>
+    <string name="developer_role">ИБ-специалист • студент МЭИ</string>
     <string name="app_settings_notify_lock_screen_title">Расписание на экране блокировки</string>
     <string name="app_settings_notify_lock_screen_description">Постоянное уведомление с текущей и следующей парой</string>
     <string name="lock_screen_permission_denied">Без разрешения на уведомления расписание на экране блокировки не появится</string>

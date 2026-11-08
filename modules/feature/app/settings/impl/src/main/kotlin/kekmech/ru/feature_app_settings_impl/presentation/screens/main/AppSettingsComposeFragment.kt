@@ -5,7 +5,6 @@ import kekmech.ru.feature_app_settings_api.domain.model.isDarkTheme
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
-import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.LocalActivity
 import androidx.compose.runtime.Composable
@@ -20,7 +19,6 @@ import kekmech.ru.feature_app_settings_impl.presentation.screens.main.compose.Ap
 import kekmech.ru.feature_app_settings_impl.presentation.screens.main.elm.AppSettingsEvent.Ui
 import kekmech.ru.feature_app_settings_impl.presentation.screens.main.elm.AppSettingsStoreFactory
 import kekmech.ru.feature_app_settings_impl.presentation.screens.map_type.SelectMapTypeFragment
-import kekmech.ru.feature_bars_api.BarsLogoutHandle
 import kekmech.ru.feature_schedule_api.ScheduleFeatureApi
 import kekmech.ru.feature_schedule_api.ScheduleNotificationSettings
 import kekmech.ru.lib_elm_compose.ElmContent
@@ -34,7 +32,6 @@ private const val ACTIVITY_RECREATION_DELAY = 200L
 
 internal class AppSettingsComposeFragment : ComposeFragment() {
 
-    private val logoutHandle by inject<BarsLogoutHandle>()
     private val scheduleFeatureApi by inject<ScheduleFeatureApi>()
 
     @Composable
@@ -68,15 +65,8 @@ internal class AppSettingsComposeFragment : ComposeFragment() {
                         onOpenGithub = {
                             requireContext().openLinkExternal("https://github.com/team-ph4r0s/mpei-next")
                         },
-                        onOpenContributor = { url ->
+                        onOpenLink = { url ->
                             requireContext().openLinkExternal(url)
-                        },
-                        onLogoutBars = {
-                            if (logoutHandle.logout()) {
-                                Toast
-                                    .makeText(requireContext(), "Вы вышли из БАРС", Toast.LENGTH_SHORT)
-                                    .show()
-                            }
                         },
                         onOpenLanguageSelection = { selectedLanguage ->
                             setActivityResultListener(

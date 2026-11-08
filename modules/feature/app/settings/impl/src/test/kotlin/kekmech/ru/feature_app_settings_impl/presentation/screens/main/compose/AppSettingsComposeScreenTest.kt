@@ -4,10 +4,14 @@ import android.app.Application
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasScrollAction
 import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.isDialog
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollToNode
@@ -16,6 +20,7 @@ import androidx.test.core.app.ApplicationProvider
 import kekmech.ru.feature_app_settings_api.domain.model.AppSettings
 import kekmech.ru.feature_app_settings_api.domain.model.AppTheme
 import kekmech.ru.feature_app_settings_impl.presentation.screens.main.elm.AppSettingsEffect
+import kekmech.ru.feature_app_settings_impl.presentation.screens.main.elm.AppSettingsEvent
 import kekmech.ru.feature_app_settings_impl.presentation.screens.main.elm.AppSettingsState
 import kekmech.ru.feature_schedule_api.ScheduleNotificationSettings
 import kekmech.ru.feature_schedule_api.ScheduleNotificationSettings.State
@@ -27,6 +32,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.emptyFlow
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
@@ -54,9 +60,10 @@ class AppSettingsComposeScreenTest {
         override fun setLockScreenScheduleEnabled(enabled: Boolean) = Unit
     }
 
-    private var openedProfile: String? = null
+    private var openedLink: String? = null
+    private val accepted = mutableListOf<AppSettingsEvent>()
 
-    private fun show(darkTheme: Boolean, width: Int) {
+    private fun show(darkTheme: Boolean, width: Int, isBarsSignedIn: Boolean = false) {
         composeRule.setContent {
             Box(Modifier.requiredSize(width.dp, 800.dp)) {
                 MpeixTheme(darkTheme = darkTheme) {
@@ -73,15 +80,15 @@ class AppSettingsComposeScreenTest {
                             ),
                             isFeatureToggleSnowFlakesEnabled = false,
                             appVersionName = AppVersionName("v0.5.0"),
+                            isBarsSignedIn = isBarsSignedIn,
                         ),
                         effects = emptyFlow<AppSettingsEffect>(),
-                        onAccept = {},
+                        onAccept = { accepted += it },
                         onOpenFavorites = {},
                         onOpenScheduleNotifications = {},
                         notificationSettings = FakeSettings(),
                         onOpenGithub = {},
-                        onOpenContributor = { openedProfile = it },
-                        onLogoutBars = {},
+                        onOpenLink = { openedLink = it },
                         onOpenLanguageSelection = {},
                         onOpenMapTypeSelection = {},
                         onRecreateActivity = {},
@@ -109,6 +116,10 @@ class AppSettingsComposeScreenTest {
         }
         composeRule.onNodeWithText(app.getString(Strings.app_settings_header_developers)).assertIsDisplayed()
 
+        // every developer has the same role under the name
+        val role = app.getString(Strings.developer_role)
+        composeRule.onAllNodesWithText(role).assertCountEquals(3)
+
         // the version has exactly one "v"
         val version = app.getString(Strings.app_settings_app_version, "0.5.0")
         scrollTo(version)
@@ -135,6 +146,52 @@ class AppSettingsComposeScreenTest {
         val ivan = app.getString(Strings.developer_ivan_myalitsin_name)
         scrollTo(ivan)
         composeRule.onNodeWithText(ivan).performClick()
-        assertEquals("https://github.com/bezpaniki-arch", openedProfile)
+        assertEquals("https://github.com/bezpaniki-arch", openedLink)
+    }
+
+    @Test
+    fun supportCard_opensLavaTop() {
+        show(darkTheme = false, width = 360)
+        val title = app.getString(Strings.support_coffee_title)
+        scrollTo(title)
+        composeRule.onNodeWithText(title).performClick()
+        assertEquals("https://app.lava.top/pharosteam", openedLink)
+    }
+
+    @Test
+    fun barsSection_isHiddenWhenNobodyIsSignedIn() {
+        show(darkTheme = false, width = 360, isBarsSignedIn = false)
+        composeRule.onNodeWithText(app.getString(Strings.app_settings_header_bars)).assertDoesNotExist()
+        composeRule.onNodeWithText(app.getString(Strings.app_settings_bars_logout_title)).assertDoesNotExist()
+    }
+
+    @Test
+    fun barsLogout_needsConfirmation() {
+        show(darkTheme = false, width = 360, isBarsSignedIn = true)
+        val logout = app.getString(Strings.app_settings_bars_logout_title)
+        scrollTo(logout)
+        composeRule.onNodeWithText(logout).performClick()
+
+        // the click only asks: nothing is erased until the dialog is confirmed
+        assertTrue(accepted.none { it is AppSettingsEvent.Ui.Action.LogoutBars })
+        composeRule.onNodeWithText(app.getString(Strings.app_settings_bars_logout_dialog_title)).assertIsDisplayed()
+
+        // in English the list item and the dialog button have the same text: the button is the one inside the dialog
+        composeRule.onNode(hasText(app.getString(Strings.app_settings_bars_logout_confirm)) and hasAnyAncestor(isDialog()))
+            .performClick()
+        assertTrue(accepted.any { it is AppSettingsEvent.Ui.Action.LogoutBars })
+    }
+
+    @Test
+    fun barsLogout_canBeCancelled() {
+        show(darkTheme = false, width = 360, isBarsSignedIn = true)
+        val logout = app.getString(Strings.app_settings_bars_logout_title)
+        scrollTo(logout)
+        composeRule.onNodeWithText(logout).performClick()
+
+        composeRule.onNodeWithText(app.getString(Strings.app_settings_bars_logout_cancel)).performClick()
+        composeRule.waitForIdle()
+
+        assertTrue(accepted.none { it is AppSettingsEvent.Ui.Action.LogoutBars })
     }
 }

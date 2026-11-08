@@ -237,6 +237,15 @@
     <string name="app_settings_favorite_schedule_title">Favorite schedules</string>
     <string name="app_settings_favorite_schedule_description">Setting up quick access to schedules</string>
     <string name="app_settings_header_support">Support</string>
+    <string name="app_settings_bars_logout_title">Sign out</string>
+    <string name="app_settings_bars_logout_description">End the BARS session</string>
+    <string name="app_settings_bars_logout_dialog_title">Sign out of BARS?</string>
+    <string name="app_settings_bars_logout_dialog_text">The session will be ended and the BARS data saved on this device will be deleted. You will need to sign in again to see your marks.</string>
+    <string name="app_settings_bars_logout_confirm">Sign out</string>
+    <string name="app_settings_bars_logout_cancel">Cancel</string>
+    <string name="support_coffee_title">Buy the developers a coffee ☕</string>
+    <string name="support_coffee_text">MPEI.Hub is built by MPEI students between classes, labs and deadlines. One cup of coffee and the app gets even more useful.</string>
+    <string name="support_coffee_action">Support on Lava.top</string>
     <string name="app_settings_section_ask">Ask us a question</string>
     <string name="app_settings_section_github">Create an Issue or Pull Request</string>
     <string name="app_settings_header_developers">Developers</string>
@@ -247,8 +256,6 @@
     <string name="app_settings_original_repo_title">Original project (MpeiX)</string>
     <string name="about_project_title">About MPEI.Hub</string>
     <string name="about_project_subtitle">MPEI.Hub — New Generation</string>
-    <string name="contributor_rasul_rustamov_bio">MPEI.Hub Developer • MPEI Student</string>
-    <string name="contributor_johnny_wickky_bio">MPEI Student, InfoSec Enthusiast</string>
     <string name="dashboard_banner_eol">MPEI.Hub: About &amp; Updates</string>
     <string name="dashboard_banner_eol_desc">Direct schedule, offline MPEI maps and modern design</string>
 
@@ -418,8 +425,8 @@
     <string name="app_settings_notify_more_description">Reminder times, check frequency, permissions</string>
     <string name="developer_rasul_rustamov_name">Rasul Rustamov</string>
     <string name="developer_ivan_myalitsin_name">Ivan Myalitsin</string>
-    <string name="developer_ivan_myalitsin_role">Developer, MPEI Student</string>
     <string name="developer_johnny_wickky_name">Johnny Wickky</string>
+    <string name="developer_role">InfoSec specialist • MPEI student</string>
     <string name="app_settings_notify_lock_screen_title">Schedule on the lock screen</string>
     <string name="app_settings_notify_lock_screen_description">A persistent notification with the current and the next class</string>
     <string name="lock_screen_permission_denied">Without the notification permission the lock screen schedule will not appear</string>

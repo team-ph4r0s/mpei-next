@@ -10,6 +10,8 @@ internal data class AppSettingsState(
     val isFeatureToggleSnowFlakesEnabled: Boolean,
     val contributors: List<Contributor>? = null,
     val appVersionName: AppVersionName,
+    /** The student is signed in to BARS: the section of the account is shown only then. */
+    val isBarsSignedIn: Boolean = false,
 )
 
 internal sealed interface AppSettingsEvent {
@@ -26,6 +28,7 @@ internal sealed interface AppSettingsEvent {
             data class SetAutoHideBottomSheet(val isEnabled: Boolean) : Ui
             data class LanguageChanged(val selectedLanguage: String) : Ui
             data class MapTypeChanged(val selectedMapType: String) : Ui
+            object LogoutBars : Ui
         }
 
         object Click {
@@ -36,11 +39,14 @@ internal sealed interface AppSettingsEvent {
 
     sealed interface Internal : AppSettingsEvent {
         data class LoadAppSettingsSuccess(val appSettings: AppSettings) : Internal
+        data class BarsSignInChanged(val isSignedIn: Boolean) : Internal
     }
 }
 
 internal sealed interface AppSettingsCommand {
     object LoadAppSettings : AppSettingsCommand
+    object ObserveBarsSignIn : AppSettingsCommand
+    object LogoutBars : AppSettingsCommand
 
     data class SetDarkThemeEnabled(val isEnabled: Boolean) : AppSettingsCommand
     data class SetTheme(val theme: AppTheme) : AppSettingsCommand

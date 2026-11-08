@@ -3,6 +3,7 @@ package kekmech.ru.feature_app_settings_impl.presentation.screens.main.elm
 import kekmech.ru.ext_android.AppLocales
 import kekmech.ru.feature_app_settings_api.domain.model.AppTheme
 import kekmech.ru.feature_app_settings_impl.data.AppSettingsRepositoryImpl
+import kekmech.ru.feature_bars_api.BarsSessionHandle
 import kekmech.ru.feature_app_settings_impl.presentation.screens.main.elm.AppSettingsEvent.Internal
 import kekmech.ru.lib_elm.actorFlow
 import kotlinx.coroutines.Dispatchers
@@ -12,6 +13,7 @@ import money.vivid.elmslie.core.store.Actor
 
 internal class AppSettingsActor(
     private val appSettingsRepository: AppSettingsRepositoryImpl,
+    private val barsSession: BarsSessionHandle,
 ) : Actor<AppSettingsCommand, AppSettingsEvent>() {
 
     override fun execute(command: AppSettingsCommand): Flow<AppSettingsEvent> =
@@ -19,6 +21,14 @@ internal class AppSettingsActor(
             is AppSettingsCommand.LoadAppSettings -> actorFlow {
                 appSettingsRepository.getAppSettings()
             }.mapEvents(Internal::LoadAppSettingsSuccess)
+
+            is AppSettingsCommand.ObserveBarsSignIn -> barsSession.isSignedIn
+                .mapEvents(Internal::BarsSignInChanged)
+
+            is AppSettingsCommand.LogoutBars -> actorFlow {
+                // erases the encrypted session and the saved data: a disk operation
+                withContext(Dispatchers.IO) { barsSession.logout() }
+            }.mapEvents()
 
             is AppSettingsCommand.SetDarkThemeEnabled -> actorFlow {
                 appSettingsRepository
