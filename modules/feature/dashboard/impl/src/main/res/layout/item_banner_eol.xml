@@ -48,5 +48,5 @@
         android:layout_gravity="end|center_vertical"
         android:layout_marginEnd="16dp"
         android:importantForAccessibility="no"
-        android:src="@drawable/ic_banner_open_source" />
+        android:src="@drawable/ic_banner_mpei_emblem" />
 </androidx.cardview.widget.CardView>

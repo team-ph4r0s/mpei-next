@@ -70,7 +70,8 @@ class RepoRemoteConfig(
         fun defaults(versionName: String) = mapOf(
             ForceUpdateChecker.KEY_UPDATE_REQUIRED to "false",
             ForceUpdateChecker.KEY_CURRENT_VERSION to versionName,
-            ForceUpdateChecker.KEY_UPDATE_URL to "https://play.google.com/store/apps/details?id=ru.mpei.hub",
+            // empty: the page of the app is opened in the market that has installed it, see `openAppInMarket`
+            ForceUpdateChecker.KEY_UPDATE_URL to "",
             ForceUpdateChecker.KEY_UPDATE_DESCRIPTION to "",
         )
     }

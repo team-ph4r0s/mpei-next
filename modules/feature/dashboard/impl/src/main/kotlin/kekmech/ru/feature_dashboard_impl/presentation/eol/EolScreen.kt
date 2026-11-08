@@ -140,7 +140,7 @@ internal fun EolScreen(
             Spacer(modifier = Modifier.height(24.dp))
 
             Image(
-                painter = painterResource(R.drawable.ic_banner_open_source),
+                painter = painterResource(R.drawable.ic_banner_mpei_emblem),
                 contentDescription = null,
                 modifier = Modifier
                     .size(72.dp)
