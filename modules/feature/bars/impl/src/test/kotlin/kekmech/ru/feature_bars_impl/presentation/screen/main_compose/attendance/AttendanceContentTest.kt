@@ -128,7 +128,9 @@ class AttendanceContentTest {
 
     private fun overallLevel() = summary.overallRisk()
 
-    private fun count(text: String) = composeRule.onAllNodesWithText(text).fetchSemanticsNodes().size
+    // the card is clickable, so its texts are merged into one node: the badges are counted in the unmerged tree
+    private fun count(text: String) =
+        composeRule.onAllNodesWithText(text, useUnmergedTree = true).fetchSemanticsNodes().size
 
     @Test
     fun aCardOpensItsClassesOnClick() {
