@@ -39,6 +39,7 @@ internal class AppSettingsComposeFragment : ComposeFragment() {
         val factory = koinInject<AppSettingsStoreFactory>()
         val activity = LocalActivity.current as ComponentActivity
         val notificationSettings = koinInject<ScheduleNotificationSettings>()
+        val barsNotificationSettings = koinInject<BarsNotificationSettings>()
 
         ElmContent(
             key = "AppSettingsScreen",
@@ -59,6 +60,7 @@ internal class AppSettingsComposeFragment : ComposeFragment() {
                             addScreenForward { FavoritesFragment() }
                         },
                         notificationSettings = notificationSettings,
+                        barsNotificationSettings = barsNotificationSettings,
                         onOpenScheduleNotifications = {
                             addScreenForward { scheduleFeatureApi.getNotificationSettingsScreen() }
                         },

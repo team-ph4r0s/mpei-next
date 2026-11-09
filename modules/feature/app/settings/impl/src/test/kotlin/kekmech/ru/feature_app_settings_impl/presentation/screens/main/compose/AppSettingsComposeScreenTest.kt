@@ -22,6 +22,7 @@ import kekmech.ru.feature_app_settings_api.domain.model.AppTheme
 import kekmech.ru.feature_app_settings_impl.presentation.screens.main.elm.AppSettingsEffect
 import kekmech.ru.feature_app_settings_impl.presentation.screens.main.elm.AppSettingsEvent
 import kekmech.ru.feature_app_settings_impl.presentation.screens.main.elm.AppSettingsState
+import kekmech.ru.feature_bars_api.BarsNotificationSettings
 import kekmech.ru.feature_schedule_api.ScheduleNotificationSettings
 import kekmech.ru.feature_schedule_api.ScheduleNotificationSettings.State
 import kekmech.ru.lib_app_info.AppVersionName
@@ -87,6 +88,7 @@ class AppSettingsComposeScreenTest {
                         onOpenFavorites = {},
                         onOpenScheduleNotifications = {},
                         notificationSettings = FakeSettings(),
+                        barsNotificationSettings = FakeBarsSettings(),
                         onOpenGithub = {},
                         onOpenLink = { openedLink = it },
                         onOpenLanguageSelection = {},

@@ -1,6 +1,7 @@
 package kekmech.ru.feature_bars_impl.presentation.screen.main_compose.elm
 
 import kekmech.ru.feature_app_settings_api.AppSettingsFeatureLauncher
+import kekmech.ru.feature_bars_impl.data.attendance.AttendanceTracker
 import kekmech.ru.feature_bars_impl.data.mapper.BarsDisciplineMapper
 import kekmech.ru.feature_bars_impl.data.repository.BarsRepository
 import kekmech.ru.feature_schedule_api.data.repository.ScheduleRepository
@@ -10,11 +11,14 @@ import kekmech.ru.feature_bars_impl.presentation.screen.details.BarsDetailsFragm
 import kekmech.ru.feature_bars_impl.presentation.screen.login.BarsLoginFragment
 import kekmech.ru.feature_bars_impl.presentation.screen.login.elm.Account
 import kekmech.ru.feature_bars_impl.presentation.screen.main_compose.elm.BarsComposeEvent.Internal.CheckAuthStatusFailure
+import kekmech.ru.feature_bars_impl.presentation.screen.main_compose.elm.BarsComposeEvent.Internal.GetAttendanceFailure
+import kekmech.ru.feature_bars_impl.presentation.screen.main_compose.elm.BarsComposeEvent.Internal.GetAttendanceSuccess
 import kekmech.ru.feature_bars_impl.presentation.screen.main_compose.elm.BarsComposeEvent.Internal.GetCurrentWeekSuccess
 import kekmech.ru.feature_bars_impl.presentation.screen.main_compose.elm.BarsComposeEvent.Internal.GetMarksFailure
 import kekmech.ru.feature_bars_impl.presentation.screen.main_compose.elm.BarsComposeEvent.Internal.GetMarksSuccess
 import kekmech.ru.feature_bars_impl.presentation.screen.main_compose.elm.BarsComposeEvent.Internal.GetProfileSuccess
 import kekmech.ru.feature_bars_impl.presentation.screen.main_compose.elm.BarsComposeEvent.Internal.SubscribeAuthStatusSuccess
+import kekmech.ru.feature_bars_shared.analyzeAttendance
 import kekmech.ru.lib_bars_client.BarsSessionExpiredException
 import kekmech.ru.lib_elm.actorFlow
 import kekmech.ru.lib_navigation.AddScreenForward
@@ -35,6 +39,7 @@ internal class BarsComposeActor(
     private val router: Router,
     private val barsRepository: BarsRepository,
     private val scheduleRepository: ScheduleRepository,
+    private val attendanceTracker: AttendanceTracker,
 ) : Actor<Command, Event>() {
 
     override fun execute(command: Command): Flow<Event> =
@@ -94,6 +99,28 @@ internal class BarsComposeActor(
                     timber.log.Timber.e(e.source, "BARS main getMarks failed, id=${e.uuid}")
                     GetMarksFailure(e)
                 }
+            )
+
+            is Command.GetAttendance -> flow {
+                val studentId = barsRepository.getCurrentAccount()?.id
+                val attendance = try {
+                    barsRepository.api.loadAttendance(studentId = studentId)
+                } catch (expired: BarsSessionExpiredException) {
+                    // BARS has closed the session: back to the sign-in prompt
+                    barsRepository.onSessionExpired()
+                    return@flow
+                }
+                val summary = analyzeAttendance(attendance.records)
+                // what the student sees now is not news for the notifications
+                attendanceTracker.markSeen(attendance, summary)
+                emit(GetAttendanceSuccess(summary))
+            }.mapEvents(
+                eventMapper = { it },
+                errorMapper = { e ->
+                    val e = ExceptionWithId(e)
+                    timber.log.Timber.e(e.source, "BARS main getAttendance failed, id=${e.uuid}")
+                    GetAttendanceFailure(e)
+                },
             )
 
             // The current week is a nice-to-have for the summary: any failure just means "unknown"

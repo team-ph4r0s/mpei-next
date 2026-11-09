@@ -13,6 +13,7 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.unit.dp
 import androidx.test.core.app.ApplicationProvider
+import kekmech.ru.feature_bars_api.BarsNotificationSettings
 import kekmech.ru.feature_schedule_api.ScheduleNotificationSettings
 import kekmech.ru.feature_schedule_api.ScheduleNotificationSettings.State
 import kekmech.ru.res_strings.R.string as Strings
@@ -62,6 +63,22 @@ class NotificationSettingsSectionTest {
         }
     }
 
+    private class FakeBarsSettings(initial: BarsNotificationSettings.State) : BarsNotificationSettings {
+        val state = MutableStateFlow(initial)
+
+        override fun current() = state.value
+        override fun observe(): Flow<BarsNotificationSettings.State> = state
+        override fun setNewSkipEnabled(enabled: Boolean) {
+            state.value = state.value.copy(newSkip = enabled)
+        }
+
+        override fun setCriticalThresholdEnabled(enabled: Boolean) {
+            state.value = state.value.copy(criticalThreshold = enabled)
+        }
+    }
+
+    private val barsSettings = FakeBarsSettings(BarsNotificationSettings.State(newSkip = false, criticalThreshold = false))
+
     @Before
     fun grantNotificationPermission() {
         // the permission dialog of Android 13+ is not part of this test
@@ -74,6 +91,7 @@ class NotificationSettingsSectionTest {
                 MpeixTheme(darkTheme = darkTheme) {
                     NotificationSettingsSection(
                         settings = settings,
+                        barsSettings = barsSettings,
                         onOpenDetails = { settings.detailsOpened++ },
                     )
                 }
@@ -110,6 +128,19 @@ class NotificationSettingsSectionTest {
         composeRule.onAllNodes(isToggleable())[2].assertIsOn()
         composeRule.onAllNodes(isToggleable())[2].performClick()
         assertFalse(settings.current().lockScreenSchedule)
+
+        // attendance: a new skip and the risk of being refused, both off at first
+        composeRule.onAllNodes(isToggleable())[3].assertIsOff()
+        composeRule.onAllNodes(isToggleable())[4].assertIsOff()
+        composeRule.onAllNodes(isToggleable())[3].performClick()
+        assertTrue(barsSettings.current().newSkip)
+        composeRule.onAllNodes(isToggleable())[3].assertIsOn()
+        composeRule.onAllNodes(isToggleable())[4].performClick()
+        assertTrue(barsSettings.current().criticalThreshold)
+        composeRule.onAllNodes(isToggleable())[3].performClick()
+        composeRule.onAllNodes(isToggleable())[4].performClick()
+        assertFalse(barsSettings.current().newSkip)
+        assertFalse(barsSettings.current().criticalThreshold)
     }
 
     @Test

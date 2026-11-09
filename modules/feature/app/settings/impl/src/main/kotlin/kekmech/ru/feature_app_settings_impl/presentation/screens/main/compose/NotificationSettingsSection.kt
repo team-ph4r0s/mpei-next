@@ -20,6 +20,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.core.content.ContextCompat
+import kekmech.ru.feature_bars_api.BarsNotificationSettings
 import kekmech.ru.feature_schedule_api.ScheduleNotificationSettings
 import kekmech.ru.res_strings.R.string as Strings
 import kekmech.ru.ui_kit_lists.ListItem
@@ -32,11 +33,13 @@ import kekmech.ru.ui_kit_switch.Switch
 @Composable
 internal fun NotificationSettingsSection(
     settings: ScheduleNotificationSettings,
+    barsSettings: BarsNotificationSettings,
     onOpenDetails: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
     val state by settings.observe().collectAsState(initial = settings.current())
+    val barsState by barsSettings.observe().collectAsState(initial = barsSettings.current())
 
     // what to do when the user grants the permission requested by a switch
     var pendingEnable by remember { mutableStateOf<(() -> Unit)?>(null) }
@@ -105,6 +108,30 @@ internal fun NotificationSettingsSection(
                             Strings.lock_screen_permission_denied,
                             settings::setLockScreenScheduleEnabled,
                         )
+                    },
+                )
+            },
+        )
+        ListItem(
+            headlineText = stringResource(Strings.app_settings_notify_attendance_skip_title),
+            supportingText = stringResource(Strings.app_settings_notify_attendance_skip_description),
+            trailingContent = {
+                Switch(
+                    checked = barsState.newSkip,
+                    onCheckedChange = { enabled ->
+                        toggle(enabled, Strings.attendance_permission_denied, barsSettings::setNewSkipEnabled)
+                    },
+                )
+            },
+        )
+        ListItem(
+            headlineText = stringResource(Strings.app_settings_notify_attendance_critical_title),
+            supportingText = stringResource(Strings.app_settings_notify_attendance_critical_description),
+            trailingContent = {
+                Switch(
+                    checked = barsState.criticalThreshold,
+                    onCheckedChange = { enabled ->
+                        toggle(enabled, Strings.attendance_permission_denied, barsSettings::setCriticalThresholdEnabled)
                     },
                 )
             },

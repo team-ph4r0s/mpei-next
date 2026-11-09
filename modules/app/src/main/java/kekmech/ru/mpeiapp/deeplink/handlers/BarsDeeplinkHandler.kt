@@ -15,6 +15,6 @@ class BarsDeeplinkHandler(
 
     override fun handle(deeplink: Uri) {
         router.executeCommand(PopUntil(MainFragment::class, inclusive = false))
-        bottomTabsSwitcher.changeTab(BottomTab.PROFILE)
+        bottomTabsSwitcher.changeTab(BottomTab.BARS)
     }
 }

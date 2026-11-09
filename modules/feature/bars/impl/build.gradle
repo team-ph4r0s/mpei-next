@@ -58,6 +58,7 @@ dependencies {
     implementation(libs.vivid.elmslie.android)
     implementation(libs.vivid.elmslie.core)
     implementation(libs.mmkv)
+    implementation(libs.androidx.work.runtime.ktx)
     compileOnly(libs.timber)
 
     implementation(project(":feature_app_settings_api"))
@@ -68,7 +69,10 @@ dependencies {
     implementation(project(":ext_kotlin"))
     implementation(project(":ext_shared_preferences"))
     implementation(project(":lib_adapter"))
+    implementation(project(":ext_koin"))
     implementation(project(":lib_app_info"))
+    implementation(project(":lib_app_lifecycle"))
+    implementation(project(":feature_bars_shared"))
     implementation(project(":lib_bars_client"))
     implementation(project(":lib_bars_parser"))
     implementation(project(":lib_elm"))

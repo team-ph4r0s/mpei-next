@@ -17,6 +17,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import kekmech.ru.feature_bars_impl.presentation.screen.main_compose.attendance.attendanceItems
 import kekmech.ru.feature_bars_impl.presentation.screen.main_compose.compose.DisciplineItem
 import kekmech.ru.feature_bars_impl.presentation.screen.main_compose.compose.DisciplineUiItem
 import kekmech.ru.feature_bars_impl.presentation.screen.main_compose.compose.LoginPrompt
@@ -104,6 +105,13 @@ internal fun BarsComposeScreen(
                             onToggle = { onAccept(Ui.Click.SummaryDiscipline(it)) },
                             onRetry = { onAccept(Ui.Action.PullToRefresh) },
                         )
+
+                        BarsTab.ATTENDANCE -> attendanceItems(
+                            attendance = state.attendance,
+                            expanded = state.expandedAttendance,
+                            onToggle = { onAccept(Ui.Click.AttendanceDiscipline(it)) },
+                            onRetry = { onAccept(Ui.Action.PullToRefresh) },
+                        )
                     }
                 }
             }
@@ -162,6 +170,7 @@ private fun BarsTabs(
                 when (tab) {
                     BarsTab.DISCIPLINES -> Strings.bars_tab_disciplines
                     BarsTab.SUMMARY -> Strings.bars_tab_summary
+                    BarsTab.ATTENDANCE -> Strings.bars_tab_attendance
                 }
             )
         },

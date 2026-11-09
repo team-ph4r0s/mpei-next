@@ -314,7 +314,7 @@ private fun StatusChip(status: KmStatus) {
 }
 
 @Composable
-private fun Chip(
+internal fun Chip(
     text: String,
     contentColor: Color,
     containerColor: Color,

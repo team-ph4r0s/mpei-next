@@ -26,9 +26,12 @@ internal class BarsComposeReducer :
             is Internal.SubscribeAuthStatusSuccess -> {
                 when (event.authStatus) {
                     AuthStatus.LoggedIn -> {
+                        // the student came back to the attendance tab after a sign-out: the tab is waiting for its data
+                        val attendanceWaits = state.selectedTab == BarsTab.ATTENDANCE
                         state {
                             copy(
                                 isLoginRequired = false,
+                                isAttendanceRequested = isAttendanceRequested || attendanceWaits,
                             )
                         }
                         commands {
@@ -36,6 +39,7 @@ internal class BarsComposeReducer :
                                 .takeIf { !state.profile.isData }
                             +Command.GetMarks
                             +Command.GetCurrentWeek
+                            +Command.GetAttendance.takeIf { attendanceWaits }
                         }
                     }
 
@@ -46,6 +50,8 @@ internal class BarsComposeReducer :
                                 isRefreshing = false,
                                 isLoginRequired = true,
                                 disciplines = Resource.Loading,
+                                attendance = Resource.Loading,
+                                isAttendanceRequested = false,
                             )
                         }
                     }
@@ -82,6 +88,17 @@ internal class BarsComposeReducer :
 
             is Internal.GetCurrentWeekSuccess -> {
                 state { copy(currentWeek = event.week) }
+            }
+
+            is Internal.GetAttendanceSuccess -> {
+                state { copy(attendance = Resource.Data(event.attendance)) }
+            }
+
+            is Internal.GetAttendanceFailure -> {
+                state {
+                    // what was shown stays on the screen, a failed refresh is not a reason to take it away
+                    copy(attendance = if (attendance.isData) attendance else event.throwable.toResource())
+                }
             }
 
             is Internal.GetMarksFailure -> {
@@ -123,7 +140,27 @@ internal class BarsComposeReducer :
             }
 
             is Ui.Click.Tab -> {
-                state { copy(selectedTab = event.tab) }
+                // The attendance is four requests to a slow BARS: it is asked for when the student opens the tab
+                val needsAttendance = event.tab == BarsTab.ATTENDANCE && !state.isAttendanceRequested
+                state {
+                    copy(
+                        selectedTab = event.tab,
+                        isAttendanceRequested = isAttendanceRequested || needsAttendance,
+                    )
+                }
+                if (needsAttendance) commands { +Command.GetAttendance }
+            }
+
+            is Ui.Click.AttendanceDiscipline -> {
+                state {
+                    copy(
+                        expandedAttendance = if (event.name in expandedAttendance) {
+                            expandedAttendance - event.name
+                        } else {
+                            expandedAttendance + event.name
+                        },
+                    )
+                }
             }
 
             is Ui.Click.SummaryDiscipline -> {
@@ -144,6 +181,7 @@ internal class BarsComposeReducer :
                         isRefreshing = true,
                         // let the summary show the skeleton again instead of a stale error
                         disciplines = if (disciplines.isError) Resource.Loading else disciplines,
+                        attendance = if (attendance.isError) Resource.Loading else attendance,
                     )
                 }
                 commands {
@@ -151,6 +189,8 @@ internal class BarsComposeReducer :
                         .takeIf { !state.profile.isData }
                     +Command.GetMarks
                     +Command.GetCurrentWeek
+                    // the attendance only if the student has looked at it: nobody waits for it otherwise
+                    +Command.GetAttendance.takeIf { state.isAttendanceRequested }
                 }
             }
         }

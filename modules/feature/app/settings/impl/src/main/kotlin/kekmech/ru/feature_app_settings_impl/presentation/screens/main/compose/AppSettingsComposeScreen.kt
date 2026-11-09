@@ -26,6 +26,7 @@ import kekmech.ru.feature_app_settings_impl.presentation.screens.main.elm.AppSet
 import kekmech.ru.feature_app_settings_impl.presentation.screens.main.elm.AppSettingsEvent
 import kekmech.ru.feature_app_settings_impl.presentation.screens.main.elm.AppSettingsEvent.Ui
 import kekmech.ru.feature_app_settings_impl.presentation.screens.main.elm.AppSettingsState
+import kekmech.ru.feature_bars_api.BarsNotificationSettings
 import kekmech.ru.feature_schedule_api.ScheduleNotificationSettings
 import kekmech.ru.res_strings.R.string as Strings
 import kekmech.ru.ui_kit_lists.ListItem
@@ -44,6 +45,7 @@ internal fun AppSettingsComposeScreen(
     onOpenFavorites: () -> Unit,
     onOpenScheduleNotifications: () -> Unit,
     notificationSettings: ScheduleNotificationSettings,
+    barsNotificationSettings: BarsNotificationSettings,
     onOpenGithub: () -> Unit,
     onOpenLink: (String) -> Unit,
     onOpenLanguageSelection: (String) -> Unit,
@@ -153,6 +155,7 @@ internal fun AppSettingsComposeScreen(
                 item {
                     NotificationSettingsSection(
                         settings = notificationSettings,
+                        barsSettings = barsNotificationSettings,
                         onOpenDetails = onOpenScheduleNotifications,
                     )
                 }

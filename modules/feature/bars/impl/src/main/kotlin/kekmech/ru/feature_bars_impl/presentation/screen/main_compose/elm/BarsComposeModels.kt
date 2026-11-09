@@ -1,6 +1,7 @@
 package kekmech.ru.feature_bars_impl.presentation.screen.main_compose.elm
 
 import kekmech.ru.feature_bars_impl.domain.AssessedDiscipline
+import kekmech.ru.feature_bars_shared.AttendanceSummary
 import kekmech.ru.feature_bars_impl.presentation.screen.main_compose.compose.DisciplineUiItem
 import kekmech.ru.lib_elm.Resource
 
@@ -16,11 +17,17 @@ internal data class BarsComposeState(
     val currentWeek: Int? = null,
     /** Names of the disciplines expanded on the summary tab */
     val expandedSummary: Set<String> = emptySet(),
+    /** The attendance of the semester: it is loaded when the tab is opened for the first time, not with the marks */
+    val attendance: Resource<AttendanceSummary> = Resource.Loading,
+    val isAttendanceRequested: Boolean = false,
+    /** Names of the disciplines whose classes are shown on the attendance tab */
+    val expandedAttendance: Set<String> = emptySet(),
 )
 
 internal enum class BarsTab {
     DISCIPLINES,
     SUMMARY,
+    ATTENDANCE,
 }
 
 internal sealed interface AuthStatus {
@@ -45,6 +52,7 @@ internal sealed interface BarsComposeEvent {
             data class Discipline(val model: DisciplineUiItem) : Click
             data class Tab(val tab: BarsTab) : Click
             data class SummaryDiscipline(val name: String) : Click
+            data class AttendanceDiscipline(val name: String) : Click
         }
 
         sealed interface Action : Ui {
@@ -62,6 +70,8 @@ internal sealed interface BarsComposeEvent {
         ) : Internal
         data class GetMarksFailure(val throwable: Throwable) : Internal
         data class GetCurrentWeekSuccess(val week: Int?) : Internal
+        data class GetAttendanceSuccess(val attendance: AttendanceSummary) : Internal
+        data class GetAttendanceFailure(val throwable: Throwable) : Internal
     }
 }
 
@@ -72,6 +82,7 @@ internal sealed interface BarsComposeCommand {
     data object GetProfile : BarsComposeCommand
     data object GetMarks : BarsComposeCommand
     data object GetCurrentWeek : BarsComposeCommand
+    data object GetAttendance : BarsComposeCommand
     data class OpenDetails(val discipline: AssessedDiscipline) : BarsComposeCommand
 }
 
