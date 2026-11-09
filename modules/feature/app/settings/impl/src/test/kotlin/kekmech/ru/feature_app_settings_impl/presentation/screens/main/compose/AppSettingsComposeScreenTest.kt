@@ -61,6 +61,14 @@ class AppSettingsComposeScreenTest {
         override fun setLockScreenScheduleEnabled(enabled: Boolean) = Unit
     }
 
+    private class FakeBarsSettings : BarsNotificationSettings {
+        private val state = MutableStateFlow(BarsNotificationSettings.State(newSkip = false, criticalThreshold = false))
+        override fun current(): BarsNotificationSettings.State = state.value
+        override fun observe(): Flow<BarsNotificationSettings.State> = state
+        override fun setNewSkipEnabled(enabled: Boolean) = Unit
+        override fun setCriticalThresholdEnabled(enabled: Boolean) = Unit
+    }
+
     private var openedLink: String? = null
     private val accepted = mutableListOf<AppSettingsEvent>()
 
