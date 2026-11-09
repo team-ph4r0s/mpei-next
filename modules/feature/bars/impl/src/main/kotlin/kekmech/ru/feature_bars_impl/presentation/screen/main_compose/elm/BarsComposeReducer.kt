@@ -148,7 +148,7 @@ internal class BarsComposeReducer :
                         isAttendanceRequested = isAttendanceRequested || needsAttendance,
                     )
                 }
-                if (needsAttendance) commands { +Command.GetAttendance }
+                commands { if (needsAttendance) +Command.GetAttendance }
             }
 
             is Ui.Click.AttendanceDiscipline -> {

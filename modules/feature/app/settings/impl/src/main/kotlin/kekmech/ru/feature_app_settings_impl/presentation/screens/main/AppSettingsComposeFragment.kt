@@ -19,6 +19,7 @@ import kekmech.ru.feature_app_settings_impl.presentation.screens.main.compose.Ap
 import kekmech.ru.feature_app_settings_impl.presentation.screens.main.elm.AppSettingsEvent.Ui
 import kekmech.ru.feature_app_settings_impl.presentation.screens.main.elm.AppSettingsStoreFactory
 import kekmech.ru.feature_app_settings_impl.presentation.screens.map_type.SelectMapTypeFragment
+import kekmech.ru.feature_bars_api.BarsNotificationSettings
 import kekmech.ru.feature_schedule_api.ScheduleFeatureApi
 import kekmech.ru.feature_schedule_api.ScheduleNotificationSettings
 import kekmech.ru.lib_elm_compose.ElmContent
