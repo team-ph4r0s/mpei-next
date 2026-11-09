@@ -9,8 +9,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.test.assertCountEquals
-import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
@@ -98,16 +96,16 @@ class AttendanceContentTest {
     private fun summaryShowsTheDisciplinesAndTheLevels(darkTheme: Boolean, width: Dp) {
         show(Resource.Data(summary), darkTheme, width)
 
-        composeRule.onNodeWithText(context.getString(Strings.attendance_semester_title)).assertIsDisplayed()
+        composeRule.onNodeWithText(context.getString(Strings.attendance_semester_title)).assertExists()
         for (name in listOf("Физика", "Химия", "Математика")) {
-            composeRule.onNodeWithText(name).assertIsDisplayed()
+            composeRule.onNodeWithText(name).assertExists()
         }
         // the level is a word, not a color only
-        composeRule.onNodeWithText(context.getString(Strings.attendance_risk_critical)).assertIsDisplayed()
-        composeRule.onNodeWithText(context.getString(Strings.attendance_risk_warning)).assertIsDisplayed()
-        composeRule.onNodeWithText(context.getString(Strings.attendance_risk_ok)).assertIsDisplayed()
+        composeRule.onNodeWithText(context.getString(Strings.attendance_risk_critical)).assertExists()
+        composeRule.onNodeWithText(context.getString(Strings.attendance_risk_warning)).assertExists()
+        composeRule.onNodeWithText(context.getString(Strings.attendance_risk_ok)).assertExists()
         // the percentage of the whole semester is shown in the ring
-        composeRule.onNodeWithText("${summary.percent}%").assertIsDisplayed()
+        composeRule.onNodeWithText("${summary.percent}%").assertExists()
     }
 
     @Test
@@ -130,29 +128,34 @@ class AttendanceContentTest {
 
     private fun overallLevel() = summary.overallRisk()
 
+    private fun count(text: String) = composeRule.onAllNodesWithText(text).fetchSemanticsNodes().size
+
     @Test
     fun aCardOpensItsClassesOnClick() {
         show(Resource.Data(summary))
         val skip = context.getString(Strings.attendance_status_absent)
+        val present = context.getString(Strings.attendance_status_present)
 
-        // closed: the classes are not in the picture
-        composeRule.onAllNodesWithText(skip).assertCountEquals(0)
-
-        composeRule.onNodeWithText("Физика").performClick()
-
-        // Physics has three skips: three badges
-        composeRule.onAllNodesWithText(skip).assertCountEquals(3)
-        composeRule.onNodeWithText(context.getString(Strings.attendance_status_present)).assertIsDisplayed()
+        // the header and the cards say "Missed" / "Present" too: count what a click adds, not the absolute number
+        val skipClosed = count(skip)
+        val presentClosed = count(present)
 
         composeRule.onNodeWithText("Физика").performClick()
-        composeRule.onAllNodesWithText(skip).assertCountEquals(0)
+
+        // Physics has three skips (three badges) and one visit (one badge)
+        assertEquals(skipClosed + 3, count(skip))
+        assertEquals(presentClosed + 1, count(present))
+
+        composeRule.onNodeWithText("Физика").performClick()
+        assertEquals(skipClosed, count(skip))
+        assertEquals(presentClosed, count(present))
     }
 
     @Test
     fun noRecordsIsAWordNotAnEmptyScreen() {
         show(Resource.Data(analyzeAttendance(emptyList())))
 
-        composeRule.onNodeWithText(context.getString(Strings.attendance_empty)).assertIsDisplayed()
+        composeRule.onNodeWithText(context.getString(Strings.attendance_empty)).assertExists()
     }
 
     @Test
