@@ -18,6 +18,21 @@ public data class MapMarker(
 @Serializable
 public data class Location(val lat: Double, val lng: Double)
 
+private const val METERS_PER_DEGREE = 111_195.0
+private const val DEGREES_IN_HALF_TURN = 180.0
+
+/**
+ * The place that is [eastMeters] to the east and [northMeters] to the north of this one (on the ground; precise enough for
+ * the tens of meters that two maps of the same campus can differ by).
+ */
+public fun Location.offsetByMeters(eastMeters: Double, northMeters: Double): Location {
+    val metersPerDegreeOfLongitude = METERS_PER_DEGREE * kotlin.math.cos(lat * kotlin.math.PI / DEGREES_IN_HALF_TURN)
+    return Location(
+        lat = lat + northMeters / METERS_PER_DEGREE,
+        lng = lng + eastMeters / metersPerDegreeOfLongitude,
+    )
+}
+
 @Serializable
 public enum class MarkerType {
     FOOD,

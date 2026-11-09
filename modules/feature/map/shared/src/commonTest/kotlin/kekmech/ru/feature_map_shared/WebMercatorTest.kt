@@ -98,4 +98,23 @@ internal class WebMercatorTest {
         // the world is 1024 pixels wide, so the tile that is left of the first column is the last column again
         assertTrue(tiles.any { it.id.x == 3 && it.left > 0f && it.left < 256f })
     }
+
+    @Test
+    fun `a place shifted by meters is that far on the screen`() {
+        val zoom = 19.0
+        val shifted = campus.offsetByMeters(eastMeters = 4.4, northMeters = 1.3)
+        val (x, y) = WebMercator.toScreen(shifted, campus, zoom, widthPx = 1000f, heightPx = 1000f)
+
+        // at zoom 19 one pixel of a 256 px tile is 0.3 m at the equator, and cos(55.755°) times less here
+        val metersPerPixel = 156_543.03392 * kotlin.math.cos(campus.lat * kotlin.math.PI / 180) / (1 shl 19)
+        assertNear(500.0 + 4.4 / metersPerPixel, x.toDouble(), delta = 0.5)
+        assertNear(500.0 - 1.3 / metersPerPixel, y.toDouble(), delta = 0.5)
+    }
+
+    @Test
+    fun `no shift is no change`() {
+        val same = campus.offsetByMeters(eastMeters = 0.0, northMeters = 0.0)
+
+        assertEquals(campus, same)
+    }
 }

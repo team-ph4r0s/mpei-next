@@ -45,6 +45,7 @@ import kekmech.ru.feature_map_shared.PlacedTile
 import kekmech.ru.feature_map_shared.TileId
 import kekmech.ru.feature_map_shared.WebMercator
 import kekmech.ru.feature_map_shared.markerAt
+import kekmech.ru.feature_map_shared.offsetByMeters
 import kotlin.math.ceil
 import kotlin.math.ln
 import kotlin.math.roundToInt
@@ -163,7 +164,10 @@ public fun MpeiMap(
 }
 
 private fun DrawScope.drawLayer(layer: TileLayer, camera: MapCamera, loader: TileLoader, filter: ColorFilter?) {
-    val tiles = WebMercator.visibleTiles(camera.center, camera.zoom, size.width, size.height, layer.maxLevel)
+    // a layer whose features lie aside of the imagery is drawn from the point that is that far from the center: the map
+    // moves back, and the markers (they are placed by the imagery) stand on the same buildings as on the satellite
+    val center = camera.center.offsetByMeters(layer.featuresEastMeters, layer.featuresNorthMeters)
+    val tiles = WebMercator.visibleTiles(center, camera.zoom, size.width, size.height, layer.maxLevel)
     for (tile in tiles) {
         val bitmap = loader.get(layer, tile.id)
         if (bitmap != null) {
