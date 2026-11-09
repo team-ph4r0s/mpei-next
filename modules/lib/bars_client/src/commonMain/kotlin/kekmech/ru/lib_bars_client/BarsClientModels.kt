@@ -19,7 +19,23 @@ data class BarsEndpoints(
     /** The header with the rating of a semester: what the marks page asks for when the semester of the rating is changed. */
     val headerPart: String get() = "$baseUrl/bars_web/ST_Study/Main/_PartialHeader"
     val logout: String get() = "$baseUrl/BARS_Web/Auth/Exit"
+
+    /** "Посещение занятий": the page with the semesters and the first skips. */
+    val attendance: String get() = "$baseUrl/bars_web/ST_Study/Lesson__Student/ListStudent__Lesson__Student"
+
+    /** The table of "Посещение занятий" for a filter: what the page asks for when a filter or the page of the pager changes. */
+    val attendancePart: String get() = "$baseUrl/bars_web/ST_Study/Lesson__Student/_PartialListStudent__Lesson__Student"
 }
+
+/** The attendance of a student in a semester: every class that BARS has a record of, with what BARS says about it. */
+data class BarsAttendance(
+    /** The semesters of the filter of the page, to choose another one. */
+    val semesters: List<kekmech.ru.lib_bars_parser.BarsSemester>,
+    /** The semester [records] are of: the one that BARS opens (the current) or the one that was asked for. */
+    val semesterId: String,
+    /** Skips (with a good reason or without) and visits; the status of each is final, see [BarsApi.loadAttendance]. */
+    val records: List<kekmech.ru.lib_bars_parser.BarsAttendanceRecord>,
+)
 
 sealed interface BarsLoginResult {
 

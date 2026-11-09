@@ -19,6 +19,8 @@ import io.ktor.http.Parameters
 import io.ktor.http.URLBuilder
 import io.ktor.http.takeFrom
 import kekmech.ru.lib_http.createPageHttpClient
+import kekmech.ru.lib_bars_parser.BarsAttendanceRecord
+import kekmech.ru.lib_bars_parser.BarsAttendanceStatus
 import kekmech.ru.lib_bars_parser.BarsAuthParser
 import kekmech.ru.lib_bars_parser.BarsHtmlParser
 import kekmech.ru.lib_bars_parser.BarsMarksPage
@@ -33,6 +35,16 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
 private const val MAX_REDIRECTS = 8
+
+// The values of the filters of "Посещение занятий" (the options of its selects)
+private const val SKIPPED = "1"
+private const val VISITED = "2"
+private const val ANY_REASON = "*"
+private const val GOOD_REASON = "2"
+
+// The pager offers 500 records at most; a semester has far fewer, the limit is only a guard against a loop
+private const val ATTENDANCE_PAGE_SIZE = 500
+private const val MAX_ATTENDANCE_PAGES = 10
 
 private fun HttpClientConfig<*>.configureBars(cookies: CookiesStorage) {
     // The redirects are followed by hand in BarsClient.send(): Ktor does not follow the one that answers a POST
@@ -182,6 +194,69 @@ class BarsClient(
     override suspend fun loadRating(semesterId: String, studentId: String?): BarsRating? = mutex.withLock {
         BarsHtmlParser.parseRating(sendSemesterPart(endpoints.headerPart, semesterId, studentId).body)
     }
+
+    /** @see BarsApi.loadAttendance */
+    override suspend fun loadAttendance(semesterId: String?, studentId: String?): BarsAttendance = mutex.withLock {
+        val id = knownStudent(studentId)
+        val pageResponse = send(HttpMethod.Get, endpoints.attendance, query = listOf("studentID" to id))
+        if (isSignInPage(pageResponse)) throw failure(pageResponse)
+        val page = BarsHtmlParser.parseAttendancePage(pageResponse.body)
+        val semester = semesterId?.let(::checkedId)
+            ?: page.selectedSemester?.id
+            ?: page.semesters.firstOrNull()?.id
+            ?: throw BarsNetworkException("The attendance page has no semesters")
+
+        // The skips with any reason, the ones among them that have a good reason, the visits
+        val skips = loadAttendanceRecords(id, semester, skipType = SKIPPED, reason = ANY_REASON)
+        val excused = loadAttendanceRecords(id, semester, skipType = SKIPPED, reason = GOOD_REASON).mapTo(HashSet()) { it.id }
+        val visits = loadAttendanceRecords(id, semester, skipType = VISITED, reason = ANY_REASON)
+
+        BarsAttendance(
+            semesters = page.semesters,
+            semesterId = semester,
+            records = (
+                skips.map { it.withStatus(if (it.id in excused) BarsAttendanceStatus.EXCUSED else BarsAttendanceStatus.ABSENT) } +
+                    visits.map { it.withStatus(BarsAttendanceStatus.PRESENT) }
+                ).distinctBy { it.id },
+        )
+    }
+
+    /**
+     * The records of one filter, all the pages of the pager: the request is the one of `getQuery__PartialListStudent__Lesson__Student`
+     * of the page (the numbers go as the strings that the page takes them from the attributes of the table).
+     */
+    private suspend fun loadAttendanceRecords(
+        studentId: String,
+        semesterId: String,
+        skipType: String,
+        reason: String,
+    ): List<BarsAttendanceRecord> {
+        val records = mutableListOf<BarsAttendanceRecord>()
+        for (pageNumber in 1..MAX_ATTENDANCE_PAGES) {
+            val query = """{"ID":"$studentId","State":null,"SortOrder":"CustomSort1 desc","Page":"$pageNumber",""" +
+                """"PageSize":"$ATTENDANCE_PAGE_SIZE","SearchText":"","FilterStartDate":"","FilterEndDate":"",""" +
+                """"FilterSemester":{"Value":"$semesterId"},"FilterLessonSkipType":{"Value":"$skipType"},""" +
+                """"FilterLessonSkipReason":{"Value":"$reason"}}"""
+            val response = send(
+                HttpMethod.Get,
+                endpoints.attendancePart,
+                query = listOf("studentID" to studentId, "query" to query),
+                ajax = true,
+            )
+            if (isSignInPage(response)) throw failure(response)
+            // No table is no records: BARS may answer a filter that matches nothing with a short text
+            val part = runCatching { BarsHtmlParser.parseAttendancePage(response.body) }.getOrNull() ?: break
+            records += part.records
+            val total = part.total
+            val last = part.records.isEmpty() || (total != null && records.size >= total) ||
+                (total == null && part.records.size < ATTENDANCE_PAGE_SIZE)
+            if (last) break
+        }
+        return records
+    }
+
+    private fun isSignInPage(response: BarsResponse): Boolean =
+        BarsHtmlParser.detectPage(response.body).let { it == BarsPageKind.LOGIN || it == BarsPageKind.TWO_FACTOR }
 
     private fun knownStudent(studentId: String?): String = checkedId(
         studentId ?: this.studentId ?: error("The student is not known yet, call login() or loadMarksPage() first"),

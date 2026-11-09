@@ -1,6 +1,7 @@
 package kekmech.ru.feature_bars_shared
 
 import kekmech.ru.lib_bars_client.BarsApi
+import kekmech.ru.lib_bars_client.BarsAttendance
 import kekmech.ru.lib_bars_client.BarsLoginResult
 import kekmech.ru.lib_bars_client.BarsNetworkException
 import kekmech.ru.lib_bars_client.BarsSessionExpiredException
@@ -417,6 +418,11 @@ class BarsControllerTest {
             calls += "loadRating($semesterId)"
             ratingError?.let { throw it }
             return ratingFor
+        }
+
+        override suspend fun loadAttendance(semesterId: String?, studentId: String?): BarsAttendance {
+            calls += "loadAttendance($semesterId)"
+            return BarsAttendance(semesters = emptyList(), semesterId = semesterId ?: "1", records = emptyList())
         }
 
         override suspend fun logout() {

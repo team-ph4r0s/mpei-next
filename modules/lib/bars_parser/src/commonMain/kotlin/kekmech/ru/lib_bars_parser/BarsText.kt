@@ -150,7 +150,7 @@ internal fun parseDisciplineHeader(text: String): DisciplineHeader {
     }
 }
 
-private fun splitOutsideBrackets(text: String): List<String> {
+internal fun splitOutsideBrackets(text: String): List<String> {
     val parts = mutableListOf<String>()
     val current = StringBuilder()
     var depth = 0

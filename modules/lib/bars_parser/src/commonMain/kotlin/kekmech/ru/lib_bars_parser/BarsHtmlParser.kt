@@ -10,6 +10,11 @@ private const val SUMMARY_TABLE_ID = "tableMarkSummary"
 private const val SUMMARY_BLOCK_ID = "div-Student_SemesterSheet__MarkSummary"
 private const val DEADLINE_PREFIX = "сдать до"
 private val STUDENT_ID = Regex("studentID=([0-9a-fA-F-]{36})", RegexOption.IGNORE_CASE)
+private const val ATTENDANCE_TABLE_ID = "tbl__PartialListStudent__Lesson__Student"
+private const val ATTENDANCE_SEMESTER_SELECT_ID = "ddl_LessonStudent_FilterSemester"
+private const val ALL_SEMESTERS = "*"
+private val PAIR = Regex("(\\d+)\\s*пара(?:\\s*\\((\\d{1,2}:\\d{2})\\s*[-–]\\s*(\\d{1,2}:\\d{2})\\))?")
+private val PAGER_TOTAL = Regex("из\\s+(\\d+)")
 
 /**
  * Parser of the pages of bars.mpei.ru. It only reads text: downloading, cookies and the sign-in are somebody else's job.
@@ -152,6 +157,115 @@ object BarsHtmlParser {
                     selected = option.hasClass("active"),
                 )
             },
+        )
+    }
+
+    /**
+     * The page "Посещение занятий" (`ST_Study/Lesson__Student/ListStudent__Lesson__Student`) or the answer of its ajax
+     * request (`_PartialListStudent__Lesson__Student`), which is the same table with the filters and the pager.
+     * @throws BarsParseException if there is no table of the classes in [html]
+     */
+    fun parseAttendancePage(html: String): BarsAttendancePage {
+        val document = Ksoup.parse(html)
+        val table = document.getElementById(ATTENDANCE_TABLE_ID)
+            ?: throw BarsParseException("There is no #$ATTENDANCE_TABLE_ID in the text, it is not the attendance page")
+
+        val semesters = document.select("select#$ATTENDANCE_SEMESTER_SELECT_ID option")
+            .filter { it.attr("value") != ALL_SEMESTERS }
+            .map { option ->
+                BarsSemester(
+                    id = option.attr("value"),
+                    name = normalizeBarsText(option.text()),
+                    selected = option.hasAttr("selected"),
+                )
+            }
+        val pager = document.getElementById("st_les__Pager")
+        return BarsAttendancePage(
+            semesters = semesters,
+            records = table.select("tr[data-ls-id]").mapNotNull(::parseAttendanceRow),
+            total = pager?.selectFirst(".pager-size")?.text()
+                ?.let { PAGER_TOTAL.find(normalizeBarsText(it)) }?.groupValues?.get(1)?.toIntOrNull(),
+            page = pager?.selectFirst("li.page-item.active")?.text()?.trim()?.toIntOrNull() ?: 1,
+        )
+    }
+
+    private fun parseAttendanceRow(row: Element): BarsAttendanceRecord? {
+        val id = row.attr("data-ls-id").ifEmpty { return null }
+        val line = normalizeBarsText(row.selectFirst("label")?.text() ?: row.selectFirst("td")?.text().orEmpty())
+        if (line.isEmpty()) return null
+        val badges = row.select("span.badge").map { normalizeBarsText(it.text()) }.filter { it.isNotEmpty() }
+        val danger = row.select("span.badge").any { it.hasClass("bg-danger") }
+        return parseAttendanceLine(line).let { fields ->
+            BarsAttendanceRecord(
+                id = id,
+                date = fields.date,
+                pair = fields.pair,
+                timeStart = fields.timeStart,
+                timeEnd = fields.timeEnd,
+                kind = fields.kind,
+                teacher = fields.teacher,
+                discipline = fields.discipline,
+                assessmentType = fields.assessmentType,
+                group = fields.group,
+                status = attendanceStatusOf(badges, danger),
+                badges = badges,
+                raw = line,
+            )
+        }
+    }
+
+    /**
+     * What the badges say, as far as the parser can tell: "пропуск" is a skip, a good reason makes it an excused one,
+     * "посещ..." is a visit. The client does not depend on this: it asks BARS for the skips and for the visits separately.
+     */
+    private fun attendanceStatusOf(badges: List<String>, danger: Boolean): BarsAttendanceStatus {
+        val text = badges.joinToString(" ").lowercase()
+        return when {
+            "без уважительной" in text -> BarsAttendanceStatus.ABSENT
+            "уважительн" in text -> BarsAttendanceStatus.EXCUSED
+            "пропуск" in text || "отсутств" in text || danger -> BarsAttendanceStatus.ABSENT
+            "посещ" in text || "присутств" in text -> BarsAttendanceStatus.PRESENT
+            else -> BarsAttendanceStatus.UNKNOWN
+        }
+    }
+
+    private class AttendanceFields(
+        val date: String,
+        val pair: Int?,
+        val timeStart: String?,
+        val timeEnd: String?,
+        val kind: String,
+        val teacher: String,
+        val discipline: String,
+        val assessmentType: String?,
+        val group: String,
+    )
+
+    /**
+     * "28.10.26, 7 пара (20:30-22:00), лекция (Иванов И.И.), Физика (экзамен), ИЭозс-45-25". Only the name of the
+     * discipline may have commas, so the first three parts and the last one are taken, the middle is the discipline.
+     * A line that has too few parts keeps everything in the discipline: the text is not lost.
+     */
+    private fun parseAttendanceLine(line: String): AttendanceFields {
+        val parts = splitOutsideBrackets(line)
+        if (parts.size < 4) {
+            return AttendanceFields("", null, null, null, "", "", line, null, "")
+        }
+        val pair = PAIR.find(parts[1])
+        val (kind, teacher) = splitTrailingBrackets(parts[2])
+        val hasGroup = parts.size >= 5
+        val disciplineParts = if (hasGroup) parts.subList(3, parts.size - 1) else parts.subList(3, parts.size)
+        val (discipline, assessmentType) = splitTrailingBrackets(disciplineParts.joinToString(", "))
+        return AttendanceFields(
+            date = parts[0],
+            pair = pair?.groupValues?.get(1)?.toIntOrNull(),
+            timeStart = pair?.groupValues?.get(2)?.ifEmpty { null },
+            timeEnd = pair?.groupValues?.get(3)?.ifEmpty { null },
+            kind = kind,
+            teacher = teacher.orEmpty(),
+            discipline = discipline,
+            assessmentType = assessmentType,
+            group = if (hasGroup) parts.last() else "",
         )
     }
 

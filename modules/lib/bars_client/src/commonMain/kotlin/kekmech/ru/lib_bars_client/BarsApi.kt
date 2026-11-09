@@ -37,5 +37,16 @@ interface BarsApi {
 
     suspend fun loadRating(semesterId: String, studentId: String? = null): BarsRating?
 
+    /**
+     * "Посещение занятий" of a semester ([semesterId] is a value of the semester filter, the current one if null).
+     *
+     * BARS lists the classes with a filter "skipped / visited" and a filter of the reason of a skip, so the status of a
+     * record does not come from how its badge looks but from the filter that returned it: the skips with any reason, the
+     * skips with a good reason (they are [kekmech.ru.lib_bars_parser.BarsAttendanceStatus.EXCUSED], the other skips are
+     * [kekmech.ru.lib_bars_parser.BarsAttendanceStatus.ABSENT]) and the visits.
+     * @throws BarsSessionExpiredException if BARS wants the sign-in again
+     */
+    suspend fun loadAttendance(semesterId: String? = null, studentId: String? = null): BarsAttendance
+
     suspend fun logout()
 }
