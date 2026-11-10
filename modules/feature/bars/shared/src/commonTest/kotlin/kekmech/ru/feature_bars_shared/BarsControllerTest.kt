@@ -312,6 +312,43 @@ class BarsControllerTest {
     }
 
     @Test
+    fun `the attendance is loaded once when its tab is opened`() = runTest(UnconfinedTestDispatcher()) {
+        val controller = contentScreen()
+        assertNull(assertIs<BarsUiState.Content>(controller.state.value).attendance)
+
+        controller.selectTab(BarsTab.ATTENDANCE)
+        controller.selectTab(BarsTab.MARKS)
+        controller.selectTab(BarsTab.ATTENDANCE)
+
+        val content = assertIs<BarsUiState.Content>(controller.state.value)
+        assertEquals(BarsTab.ATTENDANCE, content.tab)
+        assertEquals(false, content.loading)
+        assertEquals(false, content.attendance?.hasRecords)
+        assertEquals(1, api.calls.count { it.startsWith("loadAttendance") })
+    }
+
+    @Test
+    fun `refresh on the attendance tab asks for the attendance again`() = runTest(UnconfinedTestDispatcher()) {
+        val controller = contentScreen()
+        controller.selectTab(BarsTab.ATTENDANCE)
+
+        controller.refresh()
+
+        assertEquals(2, api.calls.count { it.startsWith("loadAttendance") })
+        assertEquals(BarsTab.ATTENDANCE, assertIs<BarsUiState.Content>(controller.state.value).tab)
+    }
+
+    @Test
+    fun `a closed session while the attendance is loaded leads to the sign-in`() = runTest(UnconfinedTestDispatcher()) {
+        val controller = contentScreen()
+        api.attendanceError = BarsSessionExpiredException()
+
+        controller.selectTab(BarsTab.ATTENDANCE)
+
+        assertIs<BarsUiState.SignIn>(controller.state.value)
+    }
+
+    @Test
     fun `another semester on the summary tab loads the summary of it`() = runTest(UnconfinedTestDispatcher()) {
         val controller = contentScreen()
         controller.selectTab(BarsTab.SUMMARY)
@@ -360,6 +397,7 @@ class BarsControllerTest {
 
     private class FakeApi : BarsApi {
         val calls = mutableListOf<String>()
+        var attendanceError: Exception? = null
         var lastPassword: String? = null
 
         var restored = false
@@ -422,6 +460,7 @@ class BarsControllerTest {
 
         override suspend fun loadAttendance(semesterId: String?, studentId: String?): BarsAttendance {
             calls += "loadAttendance($semesterId)"
+            attendanceError?.let { throw it }
             return BarsAttendance(semesters = emptyList(), semesterId = semesterId ?: "1", records = emptyList())
         }
 

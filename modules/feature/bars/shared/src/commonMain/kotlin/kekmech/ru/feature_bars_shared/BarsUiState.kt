@@ -47,6 +47,8 @@ sealed interface BarsUiState {
         val tab: BarsTab = BarsTab.MARKS,
         /** The summary of [semesterId], null until the tab is opened. */
         val summary: BarsSummaryPage? = null,
+        /** The attendance of the student, null until the tab is opened. */
+        val attendance: AttendanceSummary? = null,
         /** A request is going. */
         val loading: Boolean = false,
         /** Why the last request failed; what is shown is the data of the request before it. */
@@ -57,4 +59,4 @@ sealed interface BarsUiState {
     }
 }
 
-enum class BarsTab { MARKS, SUMMARY }
+enum class BarsTab { MARKS, SUMMARY, ATTENDANCE }

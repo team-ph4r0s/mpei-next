@@ -120,10 +120,20 @@ class BarsController(
                     it.copy(summary = api.loadSummary(semesterId), loading = false)
                 }
             }
+        } else if (tab == BarsTab.ATTENDANCE && current.attendance == null) {
+            // The attendance is four requests to a slow BARS: it is asked for when the student opens the tab
+            mutableState.value = current.copy(tab = tab, loading = true, error = null)
+            scope.launch {
+                mutableState.value = contentGuard(current.copy(tab = tab)) {
+                    it.copy(attendance = loadAttendance(), loading = false)
+                }
+            }
         } else {
             mutableState.value = current.copy(tab = tab, error = null)
         }
     }
+
+    private suspend fun loadAttendance(): AttendanceSummary = analyzeAttendance(api.loadAttendance().records)
 
     /** Loads the shown semester again. */
     fun refresh() {
@@ -147,11 +157,13 @@ class BarsController(
                 // The rating is a nice-to-have: its failure must not hide the marks
                 val rating = attempt(onError = { null }) { api.loadRating(semesterId) }
                 val summary = if (tab == BarsTab.SUMMARY) api.loadSummary(semesterId) else null
+                val attendance = if (tab == BarsTab.ATTENDANCE) loadAttendance() else null
                 it.copy(
                     semesterId = semesterId,
                     disciplines = part.disciplines,
                     rating = rating,
                     summary = summary,
+                    attendance = attendance,
                     loading = false,
                 )
             }
